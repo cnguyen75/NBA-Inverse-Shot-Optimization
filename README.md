@@ -270,6 +270,90 @@ directly (a flat cost is still ruled out, since choices would then follow EP
 alone); and fewer cost parameters, or context that moves decisions more.
 `scripts/v2_real.py` is written but was not run.
 
+## v3: a choice model over the feasible set (pre-registered)
+
+The last attempt. v1 and v2 above are kept as they are. This section was
+written and committed before any v3 code or results. If criterion (a) or the
+identifiability check fails, v3 stops and is reported as a negative result.
+
+### Model
+
+Same forward problem, data filters, splits (60/20/20 by shot, seeds as in v2),
+grid (0.25 ft by 0.1 s, with t <= k) and frozen expected-points model as v2.
+Instead of optimality conditions, each observed decision is treated as a draw
+from a choice distribution over the feasible grid:
+
+    P(d | x) ∝ exp( (EP(d; x) - C(d)) / T )
+    C(d) = β_mid·[4 < s <= 14] + β_long·[14 < s <= 22] + β_three·[s > 22] + α·t
+
+**Five parameters per player:** three distance-band costs relative to the rim
+band (a rim cost cannot be identified: adding a constant to every option
+changes nothing), a touch-time cost α in points per second, and the
+temperature T in points (how closely choices follow EP − C). The bands are the
+notebook's. One cost per band rather than a curve keeps each number readable
+("worth x points to this player"). Fitting is by maximum likelihood in the
+equivalent linear form u = a·EP − b·bands − c·t with a = 1/T, β = b/T, α = c/T.
+That log-likelihood is concave, so there is one maximum if the information is
+well conditioned. Each observed (s, t) is rounded to its grid cell.
+
+### Success criteria (fixed before any results)
+
+**(a) Synthetic recovery, at v2's noise.** Three synthetic players with the
+same characters as v2, in v3's parameters (T in points, β in points, α in
+points per second), fixed now:
+
+| Synthetic player | T | β_mid | β_long | β_three | α |
+|---|---|---|---|---|---|
+| prefers the rim | 0.15 | 0.15 | 0.25 | 0.30 | 0.05 |
+| prefers 3-point range | 0.15 | 0.05 | 0.05 | −0.20 | 0.05 |
+| mid-range pull-up | 0.15 | −0.15 | −0.15 | 0.10 | 0.02 |
+
+Each uses one real player's training contexts (as in v2). A decision is drawn
+from the true choice distribution, then v2's noise is added (Gaussian, sd 1.0 ft
+and 0.25 s), clipped to the feasible set and rounded to the grid. A player
+counts as **recovered** if:
+- the relative error of θ = (T, β_mid, β_long, β_three, α) is at most 0.25;
+- the band shares predicted on held-out synthetic contexts with the recovered
+  and true parameters differ by a total variation distance of at most 0.05.
+
+**(a′) Identifiability.** From the observed Fisher information at the
+maximum, in the linear form (a, b_mid, b_long, b_three, c), for each synthetic
+player and then each real player:
+- the information matrix is positive definite;
+- no pair of parameters has |correlation| above 0.95 (a ridge shows up as a
+  correlation near ±1);
+- every parameter's standard error is at most 25% of its estimate, or at most
+  0.25 in absolute terms (in the linear form's units) when the estimate is
+  smaller than 1.
+
+A profile likelihood for each parameter of each synthetic player is also
+reported. If (a) or (a′) fails on synthetic data, stop.
+
+**(b) Held-out real shots, test set scored once.** Two baselines:
+- **EP alone:** the same choice model with C = 0, so only T is fitted.
+- **The player's empirical distribution:** the product of the player's
+  training histograms of s (0.25 ft cells) and t (0.1 s cells), each with
+  add-one smoothing, restricted to t <= k and renormalised for each shot.
+
+Measures: mean log-likelihood per shot (nats on the shared grid), and the
+mean absolute error of predicted shot distance (the model's expected s
+against the actual s). v3 is **better** than a baseline for a player if the
+95% paired bootstrap interval (1,000 resamples) of the log-likelihood
+difference is entirely above zero. v3 **works on real data** if it beats both
+baselines for at least two of the three players.
+
+**(c) More than restating frequencies.** The empirical distribution predicts
+the same shot distance whatever the context; v3 can shift with context
+through EP and the shot-clock limit. On the test shots, for two context
+splits, closest defender at or below versus above the player's training
+median, and shot clock at the catch at or below 10 s versus above, compare the
+observed difference in mean shot distance with the model's predicted
+difference. v3 **explains a shift** if the observed difference's 95% bootstrap
+interval excludes zero and the predicted difference has the same sign and
+lies within that interval. v3 adds something beyond frequencies only if it
+explains at least one shift for at least two players. A split with no
+observed shift (interval includes zero) is reported as "nothing to explain".
+
 ## Data
 
 The shot logs are **not included**. They are the public Kaggle dataset
