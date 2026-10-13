@@ -538,7 +538,7 @@ percentile just over 0.05, the v3b limit itself. v3b's 13 of 15 is what an
 ideal estimator would typically produce. v3b remains a failed gate as
 registered.
 
-## v3c: the v3b test with a powered band-share limit (pre-registered)
+## v3c: the v3b test with a powered band-share limit (pre-registered; synthetic gate passed, real-data criteria failed)
 
 The band-share limit was revised **after v3b missed narrowly**, because the
 power check showed the old limit sat at the ideal estimator's 95th percentile,
@@ -566,6 +566,45 @@ seen. This section was written and committed before any v3c fit.
 - **If v3c fails,** the project ends. There is no further defect in the test to
   point at.
 
+### v3c result: the synthetic gate passed; both real-data criteria failed
+
+**Synthetic gate (`results/v3c_synthetic.json`): passed.** All 60 datasets
+passed (20 of 20 per player):
+- parameter errors at most 0.115;
+- identifiability passed in every dataset;
+- band-share gaps at most 0.064.
+
+Eight of the 60 gaps are above v3b's old 0.05 limit, about the rate the power
+check predicts for an ideal estimator.
+
+**Real players (`results/v3_real.json`, test set scored once): both
+pre-registered criteria failed, so no claim is made about the players'
+preferences.**
+
+| Test set | LeBron James | Stephen Curry | James Harden |
+|---|---|---|---|
+| Log-likelihood per shot: v3 / EP alone / empirical | −9.86 / −9.96 / −9.57 | −9.42 / −9.86 / −9.18 | −9.69 / −9.86 / −9.10 |
+| v3 − EP alone (95% interval) | +0.04 to +0.17 (better) | +0.29 to +0.58 (better) | +0.12 to +0.23 (better) |
+| v3 − empirical (95% interval) | −0.42 to −0.16 (worse) | −0.42 to −0.07 (worse) | −0.75 to −0.44 (worse) |
+| Expected-distance error, ft: v3 / empirical | 8.52 / 8.24 | 8.49 / 8.36 | 8.90 / 8.63 |
+| Defender farther than median: observed vs v3 shift in distance | +9.0 ft (6.5 to 11.2) vs −0.6 | +7.9 ft (4.9 to 10.7) vs −1.3 | +9.1 ft (6.6 to 11.4) vs −1.1 |
+| More than 10 s on the clock at the catch: observed vs v3 | −7.1 ft (−10.7 to −3.6) vs +0.3 | no shift to explain | −6.4 ft (−9.6 to −3.2) vs 0.0 |
+
+What this means:
+- **(b) failed.** v3 beats expected points alone for every player, but loses to
+  each player's own shot distribution, on log-likelihood and on distance error.
+- **(c) failed.** Where the data shows a shift with context, v3 gets it wrong.
+  Players shoot from 8–9 ft farther when the defender is farther away; v3
+  predicts slightly shorter shots. This is the limit stated from v2 on,
+  showing up in the data: defender distance is partly a result of where the
+  shot is taken (a three-pointer has the defender farther away), so treating
+  it as given context runs the cause the wrong way.
+- **The synthetic test was easier than reality.** The real fits put the
+  temperature at 0.6–1.4 points (Curry 0.58, Harden 0.67, LeBron 1.44),
+  against 0.15 for the synthetic players. Real choices follow expected points
+  far more loosely, and the real fits fail the identifiability check for
+  LeBron James and Stephen Curry (it passes for James Harden).
+
 ## The attempts, in order
 
 | | Question | Outcome |
@@ -573,9 +612,11 @@ seen. This section was written and committed before any v3c fit.
 | **v1** (course, June 2025; audited October 2026) | Can a network tell a player's real shot from generated alternatives? | Yes on held-out shots: real shot ranked first 49–64% vs 26–32% for logistic regression, chance about 29%. Partly learns the generator; the "KKT" terms never touched the cost. |
 | **v2** | Can KKT conditions with a cost inside recover a player's cost? | No. Failed pre-registered synthetic recovery: a ridge of costs fits equally well, and stationarity is only local. |
 | **v3a** | Can a five-parameter choice model recover it? | Stopped at a flawed test: synthetic players who almost never used one band, plus double-counted noise. |
-| **v3b** | The same model, with a redesigned test | Parameters recovered and identifiable in all 15 synthetic datasets, but 2 of 15 missed the band-share limit narrowly (0.056, 0.052 vs 0.05); the gate required all 15, so the real players were not fitted. |
+| **v3b** | The same model, redesigned test | Parameters recovered in 15 of 15 datasets, but 2 missed the band-share limit narrowly; the gate required all 15. |
+| **Power check** | Could an ideal estimator have passed v3b's gate? | Only 36% of the time: the limit sat at the ideal estimator's 95th percentile. The gate was underpowered. |
+| **v3c** | The same model, band-share limit set by the power check (revised after v3b's narrow miss, by a rule fixed beforehand), fresh seeds | Synthetic gate passed (60 of 60). On real players, both criteria failed: worse than each player's own shot distribution, and wrong about how shots shift with context. |
 
-No player-cost claim is made from v2, v3a or v3b.
+No claim about any player's preferences or cost is made from v2, v3a, v3b or v3c.
 
 ## Data
 

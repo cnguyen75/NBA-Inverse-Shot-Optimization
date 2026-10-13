@@ -1,0 +1,583 @@
+{
+ "command": "python scripts/v3_real.py",
+ "criterion_b_works": false,
+ "criterion_c_adds_beyond_frequencies": false,
+ "players": {
+  "lebron james": {
+   "n": {
+    "train": 485,
+    "val": 162,
+    "test": 162
+   },
+   "theta": {
+    "T": {
+     "estimate": 1.4378,
+     "ci95": [
+      0.3246,
+      2.5509
+     ]
+    },
+    "beta_mid": {
+     "estimate": 0.1096,
+     "ci95": [
+      -0.4424,
+      0.6616
+     ]
+    },
+    "beta_long": {
+     "estimate": 0.1131,
+     "ci95": [
+      -0.6569,
+      0.8832
+     ]
+    },
+    "beta_three": {
+     "estimate": 0.0896,
+     "ci95": [
+      -0.6295,
+      0.8086
+     ]
+    },
+    "alpha": {
+     "estimate": 0.1661,
+     "ci95": [
+      0.0194,
+      0.3129
+     ]
+    }
+   },
+   "ep_only_T": 0.7892,
+   "identifiability": {
+    "min_eigenvalue": 5.282694003194593,
+    "condition_number": 1790.6179358928055,
+    "max_abs_correlation": 0.8548,
+    "correlation": [
+     [
+      1.0,
+      -0.64,
+      -0.802,
+      -0.824,
+      -0.466
+     ],
+     [
+      -0.64,
+      1.0,
+      0.772,
+      0.801,
+      0.294
+     ],
+     [
+      -0.802,
+      0.772,
+      1.0,
+      0.855,
+      0.363
+     ],
+     [
+      -0.824,
+      0.801,
+      0.855,
+      1.0,
+      0.375
+     ],
+     [
+      -0.466,
+      0.294,
+      0.363,
+      0.375,
+      1.0
+     ]
+    ],
+    "estimate": [
+     0.6955,
+     0.0762,
+     0.0787,
+     0.0623,
+     0.1156
+    ],
+    "se": [
+     0.2747,
+     0.1752,
+     0.2477,
+     0.2345,
+     0.0116
+    ],
+    "se_ok": [
+     false,
+     true,
+     true,
+     true,
+     true
+    ],
+    "passed": false
+   },
+   "validation_loglik_per_shot": {
+    "model": -9.7987,
+    "ep_only": -9.8952,
+    "empirical": -9.522
+   },
+   "test": {
+    "model": {
+     "loglik_per_shot": -9.8594,
+     "loglik_ci95": [
+      -9.9633,
+      -9.7641
+     ],
+     "mae_expected_s_ft": 8.523
+    },
+    "ep_only": {
+     "loglik_per_shot": -9.963,
+     "loglik_ci95": [
+      -10.0271,
+      -9.8932
+     ],
+     "mae_expected_s_ft": 8.711
+    },
+    "empirical": {
+     "loglik_per_shot": -9.5704,
+     "loglik_ci95": [
+      -9.747,
+      -9.3985
+     ],
+     "mae_expected_s_ft": 8.243
+    }
+   },
+   "model_vs_baselines": {
+    "ep_only": {
+     "loglik_diff_ci95": [
+      0.0355,
+      0.1686
+     ],
+     "better": true,
+     "mae_diff_ft": -0.188
+    },
+    "empirical": {
+     "loglik_diff_ci95": [
+      -0.4226,
+      -0.1614
+     ],
+     "better": false,
+     "mae_diff_ft": 0.28
+    }
+   },
+   "context_shifts": {
+    "defender_above_train_median": {
+     "n_above": 76,
+     "n_below": 86,
+     "observed_diff_ft": 8.987,
+     "observed_ci95": [
+      6.54,
+      11.22
+     ],
+     "predicted_diff_ft": {
+      "model": -0.591,
+      "ep_only": -1.059,
+      "empirical": 0.0
+     },
+     "something_to_explain": true,
+     "model_explains": false
+    },
+    "shot_clock_at_catch_above_10s": {
+     "n_above": 138,
+     "n_below": 24,
+     "observed_diff_ft": -7.1,
+     "observed_ci95": [
+      -10.69,
+      -3.565
+     ],
+     "predicted_diff_ft": {
+      "model": 0.331,
+      "ep_only": 0.799,
+      "empirical": -0.0
+     },
+     "something_to_explain": true,
+     "model_explains": false
+    }
+   }
+  },
+  "stephen curry": {
+   "n": {
+    "train": 450,
+    "val": 150,
+    "test": 150
+   },
+   "theta": {
+    "T": {
+     "estimate": 0.5756,
+     "ci95": [
+      0.3537,
+      0.7975
+     ]
+    },
+    "beta_mid": {
+     "estimate": -0.0875,
+     "ci95": [
+      -0.2981,
+      0.1231
+     ]
+    },
+    "beta_long": {
+     "estimate": -0.3456,
+     "ci95": [
+      -0.5906,
+      -0.1007
+     ]
+    },
+    "beta_three": {
+     "estimate": -0.6093,
+     "ci95": [
+      -0.7912,
+      -0.4275
+     ]
+    },
+    "alpha": {
+     "estimate": 0.1467,
+     "ci95": [
+      0.0817,
+      0.2118
+     ]
+    }
+   },
+   "ep_only_T": 0.4319,
+   "identifiability": {
+    "min_eigenvalue": 4.295372432874467,
+    "condition_number": 1040.5439065143203,
+    "max_abs_correlation": 0.835,
+    "correlation": [
+     [
+      1.0,
+      -0.523,
+      -0.783,
+      -0.696,
+      -0.347
+     ],
+     [
+      -0.523,
+      1.0,
+      0.705,
+      0.791,
+      0.167
+     ],
+     [
+      -0.783,
+      0.705,
+      1.0,
+      0.835,
+      0.245
+     ],
+     [
+      -0.696,
+      0.791,
+      0.835,
+      1.0,
+      0.215
+     ],
+     [
+      -0.347,
+      0.167,
+      0.245,
+      0.215,
+      1.0
+     ]
+    ],
+    "estimate": [
+     1.7373,
+     -0.1519,
+     -0.6004,
+     -1.0586,
+     0.2549
+    ],
+    "se": [
+     0.3418,
+     0.2006,
+     0.2968,
+     0.2054,
+     0.016
+    ],
+    "se_ok": [
+     true,
+     true,
+     false,
+     true,
+     true
+    ],
+    "passed": false
+   },
+   "validation_loglik_per_shot": {
+    "model": -9.4327,
+    "ep_only": -9.962,
+    "empirical": -9.0521
+   },
+   "test": {
+    "model": {
+     "loglik_per_shot": -9.4206,
+     "loglik_ci95": [
+      -9.6074,
+      -9.2385
+     ],
+     "mae_expected_s_ft": 8.494
+    },
+    "ep_only": {
+     "loglik_per_shot": -9.863,
+     "loglik_ci95": [
+      -9.9655,
+      -9.7641
+     ],
+     "mae_expected_s_ft": 9.563
+    },
+    "empirical": {
+     "loglik_per_shot": -9.181,
+     "loglik_ci95": [
+      -9.4192,
+      -8.9451
+     ],
+     "mae_expected_s_ft": 8.363
+    }
+   },
+   "model_vs_baselines": {
+    "ep_only": {
+     "loglik_diff_ci95": [
+      0.29,
+      0.5788
+     ],
+     "better": true,
+     "mae_diff_ft": -1.069
+    },
+    "empirical": {
+     "loglik_diff_ci95": [
+      -0.4156,
+      -0.0724
+     ],
+     "better": false,
+     "mae_diff_ft": 0.131
+    }
+   },
+   "context_shifts": {
+    "defender_above_train_median": {
+     "n_above": 77,
+     "n_below": 73,
+     "observed_diff_ft": 7.919,
+     "observed_ci95": [
+      4.878,
+      10.727
+     ],
+     "predicted_diff_ft": {
+      "model": -1.317,
+      "ep_only": -1.6,
+      "empirical": -0.0
+     },
+     "something_to_explain": true,
+     "model_explains": false
+    },
+    "shot_clock_at_catch_above_10s": {
+     "n_above": 135,
+     "n_below": 15,
+     "observed_diff_ft": -0.155,
+     "observed_ci95": [
+      -4.5,
+      5.38
+     ],
+     "predicted_diff_ft": {
+      "model": 0.645,
+      "ep_only": 1.148,
+      "empirical": -0.0
+     },
+     "something_to_explain": false,
+     "model_explains": false
+    }
+   }
+  },
+  "james harden": {
+   "n": {
+    "train": 505,
+    "val": 169,
+    "test": 169
+   },
+   "theta": {
+    "T": {
+     "estimate": 0.6652,
+     "ci95": [
+      0.3803,
+      0.9502
+     ]
+    },
+    "beta_mid": {
+     "estimate": 0.0369,
+     "ci95": [
+      -0.2247,
+      0.2986
+     ]
+    },
+    "beta_long": {
+     "estimate": -0.0159,
+     "ci95": [
+      -0.3209,
+      0.2891
+     ]
+    },
+    "beta_three": {
+     "estimate": -0.1907,
+     "ci95": [
+      -0.3758,
+      -0.0055
+     ]
+    },
+    "alpha": {
+     "estimate": 0.0689,
+     "ci95": [
+      0.0295,
+      0.1084
+     ]
+    }
+   },
+   "ep_only_T": 0.4311,
+   "identifiability": {
+    "min_eigenvalue": 5.134553716720382,
+    "condition_number": 2092.2050504847166,
+    "max_abs_correlation": 0.8095,
+    "correlation": [
+     [
+      1.0,
+      -0.692,
+      -0.771,
+      -0.73,
+      -0.528
+     ],
+     [
+      -0.692,
+      1.0,
+      0.764,
+      0.809,
+      0.35
+     ],
+     [
+      -0.771,
+      0.764,
+      1.0,
+      0.81,
+      0.378
+     ],
+     [
+      -0.73,
+      0.809,
+      0.81,
+      1.0,
+      0.342
+     ],
+     [
+      -0.528,
+      0.35,
+      0.378,
+      0.342,
+      1.0
+     ]
+    ],
+    "estimate": [
+     1.5033,
+     0.0555,
+     -0.0239,
+     -0.2866,
+     0.1036
+    ],
+    "se": [
+     0.3285,
+     0.1921,
+     0.2379,
+     0.1811,
+     0.0114
+    ],
+    "se_ok": [
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "passed": true
+   },
+   "validation_loglik_per_shot": {
+    "model": -9.7219,
+    "ep_only": -9.8919,
+    "empirical": -9.2081
+   },
+   "test": {
+    "model": {
+     "loglik_per_shot": -9.6854,
+     "loglik_ci95": [
+      -9.7908,
+      -9.5868
+     ],
+     "mae_expected_s_ft": 8.9
+    },
+    "ep_only": {
+     "loglik_per_shot": -9.8579,
+     "loglik_ci95": [
+      -9.936,
+      -9.7788
+     ],
+     "mae_expected_s_ft": 9.409
+    },
+    "empirical": {
+     "loglik_per_shot": -9.0994,
+     "loglik_ci95": [
+      -9.294,
+      -8.91
+     ],
+     "mae_expected_s_ft": 8.633
+    }
+   },
+   "model_vs_baselines": {
+    "ep_only": {
+     "loglik_diff_ci95": [
+      0.1196,
+      0.2258
+     ],
+     "better": true,
+     "mae_diff_ft": -0.509
+    },
+    "empirical": {
+     "loglik_diff_ci95": [
+      -0.7456,
+      -0.4387
+     ],
+     "better": false,
+     "mae_diff_ft": 0.267
+    }
+   },
+   "context_shifts": {
+    "defender_above_train_median": {
+     "n_above": 74,
+     "n_below": 95,
+     "observed_diff_ft": 9.066,
+     "observed_ci95": [
+      6.604,
+      11.412
+     ],
+     "predicted_diff_ft": {
+      "model": -1.077,
+      "ep_only": -1.885,
+      "empirical": -0.0
+     },
+     "something_to_explain": true,
+     "model_explains": false
+    },
+    "shot_clock_at_catch_above_10s": {
+     "n_above": 148,
+     "n_below": 21,
+     "observed_diff_ft": -6.394,
+     "observed_ci95": [
+      -9.645,
+      -3.169
+     ],
+     "predicted_diff_ft": {
+      "model": 0.009,
+      "ep_only": 0.774,
+      "empirical": 0.0
+     },
+     "something_to_explain": true,
+     "model_explains": false
+    }
+   }
+  }
+ }
+}
