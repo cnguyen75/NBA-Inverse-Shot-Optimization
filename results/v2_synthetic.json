@@ -1,0 +1,260 @@
+{
+ "command": "python scripts/v2_synthetic.py",
+ "noise_sd": [
+  1.0,
+  0.25
+ ],
+ "synthetic_costs": {
+  "rim": {
+   "mu": [
+    3.0,
+    1.5
+   ],
+   "Q": [
+    [
+     0.01,
+     0.0
+    ],
+    [
+     0.0,
+     0.02
+    ]
+   ]
+  },
+  "three": {
+   "mu": [
+    25.0,
+    1.0
+   ],
+   "Q": [
+    [
+     0.008,
+     0.002
+    ],
+    [
+     0.002,
+     0.03
+    ]
+   ]
+  },
+  "midrange_pullup": {
+   "mu": [
+    15.0,
+    3.0
+   ],
+   "Q": [
+    [
+     0.012,
+     -0.003
+    ],
+    [
+     -0.003,
+     0.015
+    ]
+   ]
+  }
+ },
+ "with_noise": {
+  "rim": {
+   "contexts_from": "lebron james",
+   "n_train": 485,
+   "rho": 0.1,
+   "theta_true": [
+    -0.03,
+    -0.03,
+    0.01,
+    0.0,
+    0.02
+   ],
+   "theta_hat": [
+    -0.01444,
+    -0.02645,
+    0.00015,
+    0.00057,
+    0.0056
+   ],
+   "relative_theta_error": 0.4931,
+   "median_abs_diff_s_ft": 0.75,
+   "median_abs_diff_t_s": 0.1,
+   "true_decisions_train": {
+    "s_mean": 1.58,
+    "s_sd": 0.84,
+    "t_mean": 0.39,
+    "t_sd": 0.35
+   },
+   "residuals": {
+    "stationarity": 0.000158,
+    "comp_slackness": 0.004406
+   },
+   "recovered": false
+  },
+  "three": {
+   "contexts_from": "stephen curry",
+   "n_train": 450,
+   "rho": 0.01,
+   "theta_true": [
+    -0.202,
+    -0.08,
+    0.008,
+    0.002,
+    0.03
+   ],
+   "theta_hat": [
+    0.00976,
+    -0.01954,
+    0.0,
+    -0.0,
+    0.02006
+   ],
+   "relative_theta_error": 1.0051,
+   "median_abs_diff_s_ft": 24.75,
+   "median_abs_diff_t_s": 0.7,
+   "true_decisions_train": {
+    "s_mean": 24.6,
+    "s_sd": 0.23,
+    "t_mean": 0.71,
+    "t_sd": 0.51
+   },
+   "residuals": {
+    "stationarity": 0.00085,
+    "comp_slackness": 0.085539
+   },
+   "recovered": false
+  },
+  "midrange_pullup": {
+   "contexts_from": "james harden",
+   "n_train": 505,
+   "rho": 0.1,
+   "theta_true": [
+    -0.171,
+    0.0,
+    0.012,
+    -0.003,
+    0.015
+   ],
+   "theta_hat": [
+    -0.14785,
+    -0.10839,
+    0.00855,
+    0.00253,
+    0.02559
+   ],
+   "relative_theta_error": 0.648,
+   "median_abs_diff_s_ft": 9.25,
+   "median_abs_diff_t_s": 0.9,
+   "true_decisions_train": {
+    "s_mean": 7.82,
+    "s_sd": 3.06,
+    "t_mean": 0.27,
+    "t_sd": 0.73
+   },
+   "residuals": {
+    "stationarity": 0.000925,
+    "comp_slackness": 0.012366
+   },
+   "recovered": false
+  }
+ },
+ "no_noise_diagnostic": {
+  "rim": {
+   "contexts_from": "lebron james",
+   "n_train": 485,
+   "rho": 0.01,
+   "theta_true": [
+    -0.03,
+    -0.03,
+    0.01,
+    0.0,
+    0.02
+   ],
+   "theta_hat": [
+    -0.02888,
+    -0.02989,
+    0.00914,
+    0.00105,
+    0.01692
+   ],
+   "relative_theta_error": 0.0739,
+   "median_abs_diff_s_ft": 0.0,
+   "median_abs_diff_t_s": 0.0,
+   "true_decisions_train": {
+    "s_mean": 1.58,
+    "s_sd": 0.84,
+    "t_mean": 0.39,
+    "t_sd": 0.35
+   },
+   "residuals": {
+    "stationarity": 1e-06,
+    "comp_slackness": 0.004305
+   },
+   "recovered": true
+  },
+  "three": {
+   "contexts_from": "stephen curry",
+   "n_train": 450,
+   "rho": 0.01,
+   "theta_true": [
+    -0.202,
+    -0.08,
+    0.008,
+    0.002,
+    0.03
+   ],
+   "theta_hat": [
+    -0.04644,
+    -0.08675,
+    0.00165,
+    0.0023,
+    0.02943
+   ],
+   "relative_theta_error": 0.71,
+   "median_abs_diff_s_ft": 17.75,
+   "median_abs_diff_t_s": 0.2,
+   "true_decisions_train": {
+    "s_mean": 24.6,
+    "s_sd": 0.23,
+    "t_mean": 0.71,
+    "t_sd": 0.51
+   },
+   "residuals": {
+    "stationarity": 3e-06,
+    "comp_slackness": 0.00439
+   },
+   "recovered": false
+  },
+  "midrange_pullup": {
+   "contexts_from": "james harden",
+   "n_train": 505,
+   "rho": 0.1,
+   "theta_true": [
+    -0.171,
+    0.0,
+    0.012,
+    -0.003,
+    0.015
+   ],
+   "theta_hat": [
+    -0.16503,
+    -0.07525,
+    0.01111,
+    0.00131,
+    0.02053
+   ],
+   "relative_theta_error": 0.4405,
+   "median_abs_diff_s_ft": 0.0,
+   "median_abs_diff_t_s": 0.0,
+   "true_decisions_train": {
+    "s_mean": 7.82,
+    "s_sd": 3.06,
+    "t_mean": 0.27,
+    "t_sd": 0.73
+   },
+   "residuals": {
+    "stationarity": 1.1e-05,
+    "comp_slackness": 0.004177
+   },
+   "recovered": false
+  }
+ },
+ "criterion_a_passed": false
+}

@@ -118,7 +118,7 @@ Two feature bugs in the course notebook are fixed in the package: shots were
 ordered by the game clock as text (so 9:59 came before 11:00), and the running
 FG% was shifted across games.
 
-## v2: inverse optimization that constrains the cost (pre-registered, in progress)
+## v2: inverse optimization that constrains the cost (pre-registered; stopped at criterion a)
 
 Everything above is the **v1 audit**: the course model, its corrected
 numbers and its held-out comparison. Its pipeline (`nbashots/`, `scripts/`)
@@ -226,6 +226,49 @@ least two of the three players. Touch time is reported the same way.
 unchanged) and compare the learned (b, Q) and validation MAE. The stationarity
 term **changes what is learned** if the parameters differ by more than 25%
 (relative) and the validation MAE differs. Scored on validation, not test.
+
+### Result: stopped at criterion (a)
+
+The expected-points model passed its check on 11,080 held-out shots
+(calibration error 0.011, worst decile gap 0.024, log loss 0.654 against
+0.673 for distance alone; `results/v2_ep.json`).
+
+**Synthetic recovery failed, so v2 was not fitted to the real players** and
+criteria (b) and (c) were not run (`results/v2_synthetic.json`):
+
+| Synthetic player | Parameter error (limit 0.25) | Decision gap, ft / s (limits 1.0 / 0.25) | Recovered |
+|---|---|---|---|
+| prefers the rim | 0.49 | 0.75 / 0.10 | no |
+| prefers 3-point range | 1.01 | 24.75 / 0.70 | no |
+| mid-range pull-up | 0.65 | 9.25 / 0.90 | no |
+| *no-noise diagnostic:* rim | 0.07 | 0.00 / 0.00 | yes |
+| *no-noise:* 3-point range | 0.71 | 17.75 / 0.20 | no |
+| *no-noise:* mid-range | 0.44 | 0.00 / 0.00 | no (parameters) |
+
+Why, from the diagnostics:
+
+1. **The cost is not identified by these decisions.** The context the data
+   offers (defender distance, shot clock, period) moves the optimal decision
+   very little: under the 3-point cost the optimal distance varies by 0.23 ft
+   (sd) across real contexts. Stationarity then pins down only one
+   combination of b and Q, a ridge of costs that fit equally well. Even
+   without noise, the fit reached a residual of 3·10⁻⁶ with the wrong
+   curvature.
+2. **Stationarity is a local condition, and EP is not concave in distance.**
+   EP peaks at the rim, dips through mid-range and jumps at the arc, so a
+   cost can make every observed shot a stationary point while the global
+   optimum lies elsewhere. Solving with the recovered 3-point cost moves
+   shots 17.75 ft away from the true cost's choices.
+3. **Noise larger than the signal.** With decision noise of 1 ft and 0.25 s,
+   larger than the spread the costs produce, stationarity evaluated at noisy
+   (non-optimal) points biases the fit for all three.
+
+Possible next steps, not run: fit by the likelihood of the observed decision
+under a choice model over the whole feasible grid, P(d | x) ∝ exp((EP − C)/T),
+which uses the global objective rather than local conditions and models noise
+directly (a flat cost is still ruled out, since choices would then follow EP
+alone); and fewer cost parameters, or context that moves decisions more.
+`scripts/v2_real.py` is written but was not run.
 
 ## Data
 
