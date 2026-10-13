@@ -1,0 +1,16 @@
+# Shot log data: public Kaggle dataset with no stated licence. Download it
+# yourself (see README); never commit it or row-level derivatives of it.
+data/
+shot_logs.csv
+shot_alternatives.csv
+
+# Model and result pickles (unsafe to load); results are kept as JSON.
+*.pkl
+*.pth
+*.pt
+
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.venv/
+.DS_Store
