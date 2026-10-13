@@ -7,6 +7,10 @@
     "real_shots": 0.0,
     "alternatives": 0.1031
    },
+   "defender_over_6ft_share": {
+    "real_shots": 0.1325,
+    "alternatives": 0.2613
+   },
    "validation": {
     "all features": {
      "network": {
@@ -45,6 +49,10 @@
     "real_shots": 0.0,
     "alternatives": 0.1004
    },
+   "defender_over_6ft_share": {
+    "real_shots": 0.2062,
+    "alternatives": 0.2921
+   },
    "validation": {
     "all features": {
      "network": {
@@ -82,6 +90,10 @@
    "zone_label_mismatch_share": {
     "real_shots": 0.0,
     "alternatives": 0.0943
+   },
+   "defender_over_6ft_share": {
+    "real_shots": 0.0925,
+    "alternatives": 0.2563
    },
    "validation": {
     "all features": {

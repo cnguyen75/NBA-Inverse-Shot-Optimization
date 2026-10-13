@@ -8,7 +8,9 @@ set is not used.
 1. Label/distance mismatch: a generated alternative keeps the zone it drew
    even when its clipped distance lands in another zone (as in the notebook).
    Real shots never mismatch. Counts the share of rows that do.
-2. Ablations of the chosen network (plain BCE), refitted on train and scored
+2. Open-shot share: how often the closest defender is more than 6 ft away,
+   for real shots vs generated alternatives (all generated rows; no model).
+3. Ablations of the chosen network (plain BCE), refitted on train and scored
    on validation, with logistic regression for reference:
    - all 12 features;
    - without the four zone flags (distance stays);
@@ -48,6 +50,7 @@ def main():
         tr, va, _ = split_groups(alts["group_id"].nunique(), rng)
         alts["zone_mismatch"] = alts["shot_zone"] != consistent_zone(alts["SHOT_DIST"])
         mism = alts.groupby("IS_CHOSEN")["zone_mismatch"].mean().round(4).to_dict()
+        open6 = (alts["CLOSE_DEF_DIST"] > 6).groupby(alts["IS_CHOSEN"]).mean().round(4).to_dict()
         part = {k: alts[alts["group_id"].isin(s)].reset_index(drop=True)
                 for k, s in (("train", tr), ("val", va))}
         mean = part["train"][NUMERIC].mean().to_numpy()
@@ -78,8 +81,9 @@ def main():
                              Y["val"], lr.predict_proba(X["val"])[:, 1])), 4)}
         out[player] = {"zone_label_mismatch_share": {"real_shots": mism.get(1, 0.0),
                                                      "alternatives": mism.get(0, 0.0)},
+                       "defender_over_6ft_share": {"real_shots": open6.get(1), "alternatives": open6.get(0)},
                        "validation": res}
-        print(player, out[player]["zone_label_mismatch_share"],
+        print(player, out[player]["zone_label_mismatch_share"], out[player]["defender_over_6ft_share"],
               {k: (v["network"]["roc_auc"], v["network"]["top1_within_shot"]) for k, v in res.items()})
     with open(os.path.join(ROOT, "results", "artifacts.json"), "w") as f:
         json.dump({"command": "python scripts/diagnose_artifacts.py",
