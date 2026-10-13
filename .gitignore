@@ -17,3 +17,6 @@ __pycache__/
 
 # Images the course notebook writes when run
 notebooks/*.png
+
+# Local model files and Monte Carlo draws
+models/

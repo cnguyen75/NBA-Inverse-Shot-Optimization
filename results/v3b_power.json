@@ -1,0 +1,153 @@
+{
+ "command": "python scripts/v3b_power.py",
+ "players": {
+  "lebron james": {
+   "n_train": 485,
+   "n_val": 162,
+   "identifiability_at_truth": {
+    "passed": true,
+    "max_abs_correlation": 0.9256,
+    "se": [
+     0.3738,
+     0.1503,
+     0.3549,
+     0.3212,
+     0.0262
+    ],
+    "estimate": [
+     6.6667,
+     -1.5991,
+     -5.1119,
+     -4.7616,
+     0.3333
+    ]
+   },
+   "p_dataset_exact": 0.9225,
+   "p_dataset_exact_ci95": [
+    0.9108,
+    0.9342
+   ],
+   "p_theta_ok": 1.0,
+   "p_gap_ok": 0.9225,
+   "gap_quantiles": {
+    "50": 0.0293,
+    "90": 0.0478,
+    "95": 0.0529,
+    "99": 0.0655
+   },
+   "theta_error_quantiles": {
+    "50": 0.0302,
+    "90": 0.0554,
+    "99": 0.0844
+   },
+   "p_dataset_linearised": 0.9239,
+   "gap_quantiles_linearised": {
+    "50": 0.0289,
+    "90": 0.0476,
+    "95": 0.0535,
+    "99": 0.065
+   }
+  },
+  "stephen curry": {
+   "n_train": 450,
+   "n_val": 150,
+   "identifiability_at_truth": {
+    "passed": true,
+    "max_abs_correlation": 0.9013,
+    "se": [
+     0.4624,
+     0.1855,
+     0.3989,
+     0.2721,
+     0.0221
+    ],
+    "estimate": [
+     6.6667,
+     -1.2986,
+     -4.2707,
+     -3.4852,
+     0.3333
+    ]
+   },
+   "p_dataset_exact": 0.9395,
+   "p_dataset_exact_ci95": [
+    0.9291,
+    0.9499
+   ],
+   "p_theta_ok": 1.0,
+   "p_gap_ok": 0.9395,
+   "gap_quantiles": {
+    "50": 0.0268,
+    "90": 0.0454,
+    "95": 0.0525,
+    "99": 0.0632
+   },
+   "theta_error_quantiles": {
+    "50": 0.0441,
+    "90": 0.0819,
+    "99": 0.1243
+   },
+   "p_dataset_linearised": 0.9351,
+   "gap_quantiles_linearised": {
+    "50": 0.0274,
+    "90": 0.0461,
+    "95": 0.0523,
+    "99": 0.0646
+   }
+  },
+  "james harden": {
+   "n_train": 505,
+   "n_val": 169,
+   "identifiability_at_truth": {
+    "passed": true,
+    "max_abs_correlation": 0.8776,
+    "se": [
+     0.3459,
+     0.1633,
+     0.2983,
+     0.2295,
+     0.0239
+    ],
+    "estimate": [
+     6.6667,
+     -1.9202,
+     -3.9612,
+     -3.3887,
+     0.3333
+    ]
+   },
+   "p_dataset_exact": 0.939,
+   "p_dataset_exact_ci95": [
+    0.9285,
+    0.9495
+   ],
+   "p_theta_ok": 1.0,
+   "p_gap_ok": 0.939,
+   "gap_quantiles": {
+    "50": 0.0279,
+    "90": 0.0463,
+    "95": 0.0517,
+    "99": 0.0652
+   },
+   "theta_error_quantiles": {
+    "50": 0.0394,
+    "90": 0.0707,
+    "99": 0.102
+   },
+   "p_dataset_linearised": 0.9405,
+   "gap_quantiles_linearised": {
+    "50": 0.0275,
+    "90": 0.0455,
+    "95": 0.0514,
+    "99": 0.0631
+   }
+  }
+ },
+ "P_ideal_passes_v3b_gate": 0.357,
+ "P_ci95_from_mc": [
+  0.2995,
+  0.4247
+ ],
+ "P_linearised": 0.3542,
+ "decision": "gate underpowered: run Step 2 (v3c)"
+}
