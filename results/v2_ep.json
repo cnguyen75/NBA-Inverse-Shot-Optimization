@@ -1,0 +1,82 @@
+{
+ "command": "python scripts/v2_ep.py",
+ "shots_after_filters": 108400,
+ "shots_raw": 128069,
+ "per_player_after_filters": {
+  "lebron james": 809,
+  "stephen curry": 750,
+  "james harden": 843
+ },
+ "train_shots": 96839,
+ "heldout_shots": 11080,
+ "three_point_curve": {
+  "slope_per_ft": 1.7536,
+  "midpoint_ft": 22.016
+ },
+ "heldout_log_loss": 0.6536,
+ "distance_only_log_loss": 0.6732,
+ "ece": 0.0111,
+ "deciles": [
+  {
+   "decile": 0,
+   "n": 1108,
+   "predicted": 0.298,
+   "observed": 0.3222
+  },
+  {
+   "decile": 1,
+   "n": 1108,
+   "predicted": 0.3499,
+   "observed": 0.3421
+  },
+  {
+   "decile": 2,
+   "n": 1108,
+   "predicted": 0.3722,
+   "observed": 0.3953
+  },
+  {
+   "decile": 3,
+   "n": 1108,
+   "predicted": 0.3894,
+   "observed": 0.3791
+  },
+  {
+   "decile": 4,
+   "n": 1108,
+   "predicted": 0.4063,
+   "observed": 0.4143
+  },
+  {
+   "decile": 5,
+   "n": 1108,
+   "predicted": 0.4236,
+   "observed": 0.4278
+  },
+  {
+   "decile": 6,
+   "n": 1108,
+   "predicted": 0.4457,
+   "observed": 0.4495
+  },
+  {
+   "decile": 7,
+   "n": 1108,
+   "predicted": 0.4826,
+   "observed": 0.4847
+  },
+  {
+   "decile": 8,
+   "n": 1108,
+   "predicted": 0.5743,
+   "observed": 0.5596
+  },
+  {
+   "decile": 9,
+   "n": 1108,
+   "predicted": 0.7759,
+   "observed": 0.7635
+  }
+ ],
+ "check_passed": true
+}
