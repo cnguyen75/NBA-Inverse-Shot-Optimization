@@ -469,6 +469,59 @@ What this shows:
   enough is a judgment the pre-registration ruled out, so v3b is reported as
   a failed gate.
 
+## Power check of the v3b gate (pre-registered)
+
+v3b stays a failed gate. This step asks only whether the gate could have been
+passed by an ideal estimator at these sample sizes. It changes nothing in the
+method and was written and committed before running.
+
+**How the v3b band-share gap is defined.** For a synthetic player, the band
+shares are the model's predicted probabilities of the four distance bands
+(0–4, 4–14, 14–22, 22+ ft), averaged over that player's validation contexts.
+The gap is the total variation distance, ½ Σ |share(ŵ) − share(w*)|, between
+the shares under the fitted parameters ŵ and under the true parameters w*.
+It is measured against the true model's shares, not against sampled shares,
+so a sampled-share benchmark does not apply.
+
+**Benchmark (independent of our fitting method).** An ideal (efficient)
+estimator has errors distributed as ŵ ~ N(w*, I(w*)⁻¹), where I(w*) is the
+Fisher information at the true parameters over the player's training contexts
+(485, 450 and 505 shots). For this choice model the information does not
+depend on the observed choices: I(w*) = Σᵢ Cov_{P(·|xᵢ,w*)}(features), computed
+exactly from w* and the contexts, with no data drawn and no fit run.
+- **Primary:** exact Monte Carlo. 2,000 draws of ŵ per synthetic player
+  (seed 2026). For each draw, compute the θ error and the band-share gap
+  exactly as v3b does, through the model's real (non-linear) band shares.
+- **Cross-check (reported, does not decide):** the delta method, which
+  linearises the band shares around w*. That gives a Gaussian distribution
+  for the share errors, with 100,000 draws.
+- **Identifiability:** the identifiability part of the gate is evaluated at
+  w* with I(w*) (standard errors, correlations, positive definiteness). It is
+  either passed or failed, with no randomness.
+
+**Per-dataset pass probability.** For each synthetic player, p = P(θ error ≤
+0.25 and gap ≤ 0.05) × [identifiability at w* passes]. The v3b gate required
+all 15 datasets (5 per player) to pass, so the ideal estimator passes the gate
+with probability P = Π over players of p⁵. Monte Carlo intervals are reported.
+
+**Decision rule.**
+- If P ≥ 0.80, the limit was fair: v3b stands, and the project stops for
+  good.
+- If P < 0.80, the gate was underpowered, and Step 2 (v3c) is pre-registered
+  and run.
+
+The decision uses the primary point estimate.
+
+**If Step 2 runs, its band-share rule is fixed here, before seeing numbers.**
+- **Limit:** for each synthetic player, the 99th percentile of the ideal
+  estimator's gap from the primary Monte Carlo, rounded up to the next 0.005.
+- **Seeds:** at least 20 fresh seeds per player (none of v3b's 0–4).
+- **Pass rule:** v3c passes if, for every player, at least 18 of 20 datasets
+  pass all checks.
+- **Power check before any v3c fit:** the ideal estimator's probability of
+  meeting that rule is computed and reported before the fits, and must be at
+  least 0.80.
+
 ## The attempts, in order
 
 | | Question | Outcome |
