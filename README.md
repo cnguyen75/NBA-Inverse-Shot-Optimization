@@ -118,6 +118,115 @@ Two feature bugs in the course notebook are fixed in the package: shots were
 ordered by the game clock as text (so 9:59 came before 11:00), and the running
 FG% was shifted across games.
 
+## v2: inverse optimization that constrains the cost (pre-registered, in progress)
+
+Everything above is the **v1 audit**: the course model, its corrected
+numbers and its held-out comparison. Its pipeline (`nbashots/`, `scripts/`)
+is unchanged. v2 is a separate attempt at inverse optimization in which the
+optimality conditions actually depend on the learned cost. This section was
+written and committed before any v2 code or results.
+
+### Forward problem
+
+A player who has the ball chooses **where to shoot from** and **how long to
+hold it**, to maximise expected points minus a personal cost:
+
+    maximise over d = (s, t):   EP(s, t; x) - C(s, t)
+    subject to   g1 = -s       <= 0     (feet; distance cannot be negative)
+                 g2 = s - 35   <= 0     (feet; longer shots are end-of-clock heaves, excluded)
+                 g3 = -t       <= 0     (seconds; touch time cannot be negative)
+                 g4 = t - k    <= 0     (seconds; cannot hold the ball past the shot clock)
+
+**Decision variables (chosen by the player):**
+- `s`, shot distance in feet (`SHOT_DIST`). Where to shoot is the central
+  shot-selection choice; the data has distance but no court x/y, so direction
+  (corner, wing, top) cannot be modelled.
+- `t`, touch time in seconds (`TOUCH_TIME`): how long the player held the ball
+  before shooting. It stands in for dribbles (correlation 0.91 in the data)
+  and is continuous, which the optimality conditions need. Shot-clock time at
+  release is not a separate choice: it equals k - t.
+
+**Context (given, not chosen):** closest defender distance in feet
+(`CLOSE_DEF_DIST`), the shot clock at the catch k = `SHOT_CLOCK` +
+`TOUCH_TIME` in seconds, the period, and the player. Defender distance is
+treated as context even though a player can partly create space; the data
+cannot separate the two. Score margin during the game is not in the data
+(only the final margin, which is an outcome), so it is not used.
+
+**Shots used:** touch time above 0, shot clock recorded, k at most 24 s, and
+shot distance at most 35 ft. This keeps 108,400 of 128,069 shots, and 809,
+750 and 843 for LeBron James, Stephen Curry and James Harden. (3,358 shots have
+touch time 0 or less, 10,970 have k above 24 s, 5,567 have no shot clock and
+249 are beyond 35 ft.)
+
+**Expected points EP(s, t; x)** = P(make | s, t, x) x (2 + P(three | s)).
+P(make) is a small smooth network fitted to makes and misses; P(three | s) is
+a logistic curve in distance, because the 3-point line is 22 ft in the corners
+and 23.75 ft elsewhere and the data has no position. EP is fitted once, checked
+on held-out shots, then **frozen**. It is trained on all other players' shots
+plus the three players' training shots; their validation and test shots are
+held out of it.
+
+**Personal cost** C(d) = b·d + ½ dᵀQd with Q positive semi-definite (Q = LLᵀ),
+one (b, Q) per player, d in feet and seconds. This is the quadratic first
+version; an input-convex network is added only if the quadratic clearly
+underfits (training stationarity residual explains less than 20% of the
+variance of ∇EP).
+
+**Why the flat cost is ruled out.** The optimality conditions are
+∇EP(dᵢ) - ∇C(dᵢ) = Σⱼ λᵢⱼ ∇gⱼ(dᵢ). EP is fixed and its gradient is not zero
+at most observed shots, so C = constant cannot satisfy them unless every shot
+sits on a constraint boundary. The cost must explain why players do not simply
+take the highest-EP option.
+
+### Loss
+
+For each player, over training shots i, with multipliers λᵢⱼ = softplus(θᵢⱼ) >= 0
+(dual feasibility):
+
+    stationarity     r_i = ∇_d EP(d_i) - ∇_d C(d_i) - Σ_j λ_ij ∇g_j(d_i)    (autograd through EP and C)
+    loss             mean ||r_i||²  +  ρ · mean Σ_j λ_ij · (-g_j(d_i))
+
+The complementary-slackness penalty λ·(-g) is never negative (λ >= 0, g <= 0)
+and is zero only when each multiplier is zero or its constraint is tight.
+Primal feasibility holds for every observed shot by the filters above. ρ is
+chosen on validation.
+
+### Success criteria (fixed before any results)
+
+Splits: each player's shots, 60/20/20 by shot, seeded. All choices (ρ, the
+expected-points model's settings) are made on validation; the test set is
+scored once.
+
+**EP check (prerequisite).** On held-out shots, the predicted make probability
+is within 0.03 of the observed rate in every decile, the expected calibration
+error is at most 0.02, and the log loss beats a logistic regression on
+distance alone.
+
+**(a) Synthetic recovery. If this fails, stop and report; do not fit real
+players.** Three synthetic players with known quadratic costs (preferring the
+rim, the 3-point range and a mid-range pull-up), on the real players' training
+contexts, choose d by solving the forward problem exactly (grid search, 0.25
+ft by 0.1 s), plus Gaussian noise (sd 1.0 ft and 0.25 s), clipped to the
+feasible set. A cost counts as **recovered** if both hold for all three:
+- relative parameter error ||θ̂ - θ*|| / ||θ*|| <= 0.25, with θ = (b, Q);
+- on held-out synthetic contexts, decisions solved with θ̂ versus θ* differ by
+  a median of at most 1.0 ft and at most 0.25 s.
+
+**(b) Held-out decision prediction on real shots.** For each test shot, solve
+the forward problem with the player's learned cost and compare with the actual
+(s, t). Baselines: (1) maximise EP alone (C = 0); (2) the player's mean
+training decision. Metric: mean absolute error in feet and in seconds. The
+model **beats** a baseline on a variable if its MAE is lower and the 95%
+bootstrap interval of the paired difference is entirely below zero. v2
+**works on real data** if it beats both baselines on shot distance for at
+least two of the three players. Touch time is reported the same way.
+
+**(c) Ablation.** Refit with the stationarity term removed (everything else
+unchanged) and compare the learned (b, Q) and validation MAE. The stationarity
+term **changes what is learned** if the parameters differ by more than 25%
+(relative) and the validation MAE differs. Scored on validation, not test.
+
 ## Data
 
 The shot logs are **not included**. They are the public Kaggle dataset
