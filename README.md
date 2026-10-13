@@ -270,7 +270,7 @@ directly (a flat cost is still ruled out, since choices would then follow EP
 alone); and fewer cost parameters, or context that moves decisions more.
 `scripts/v2_real.py` is written but was not run.
 
-## v3: a choice model over the feasible set (pre-registered; stopped at criterion a)
+## v3a: a choice model over the feasible set (pre-registered; stopped at criterion a)
 
 The last attempt. v1 and v2 above are kept as they are. This section was
 written and committed before any v3 code or results. If criterion (a) or the
@@ -354,7 +354,7 @@ lies within that interval. v3 adds something beyond frequencies only if it
 explains at least one shift for at least two players. A split with no
 observed shift (interval includes zero) is reported as "nothing to explain".
 
-### Result: stopped at criteria (a) and (a′)
+### v3a result: stopped at criteria (a) and (a′)
 
 All three synthetic players failed both recovery and the identifiability
 check, so v3 was not fitted to the real players, and (b) and (c) were not
@@ -383,6 +383,61 @@ What the diagnostics show:
    makes choices look more random: T came out 0.165 and 0.173 against a true
    0.15. Even where the decisions were well predicted (band-share gaps of 0.03
    to 0.04), the parameters were off by 38% or more.
+
+## v3b: the same model, retested with a redesigned synthetic test (pre-registered)
+
+**Why the v3a test was redesigned.** v3a failed its synthetic test, and its
+results above stay in the record. The diagnostics showed two flaws in the
+test, not in the model:
+1. **The synthetic players barely used one band.** They took 0.2%, 0.6% and
+   5% of their shots from 14–22 ft, so that band's cost could not be estimated
+   from any method. The real players take 12–19% of their training shots there.
+2. **The noise was double-counted.** Extra distance noise (1 ft, 0.25 s) was
+   layered on a model whose temperature T already describes randomness in
+   choices. The test was then of a misspecified model, and the noise moved
+   shots across band edges, biasing the band costs toward zero.
+
+The model, its five parameters, the fitting, the thresholds and the real-data
+criteria (b) and (c) are unchanged from v3a. Only the synthetic test changes.
+This section was written and committed before any v3b run.
+
+### Redesigned synthetic test
+
+**(a) Well-specified recovery (gates everything after it).**
+- **Three synthetic players**, one per real player. Each uses that player's
+  training contexts and training sample size (485, 450 and 505 shots), and
+  draws decisions from the model itself, with no added noise.
+- **True parameters:** T = 0.15 points and α = 0.05 points per second for all
+  three, as in v3a. The three band costs are solved for so that the
+  synthetic player's predicted band shares on those training contexts match
+  the real player's training-split shares, each within ±0.01:
+
+  | Matched to | 0–4 ft | 4–14 ft | 14–22 ft | 22+ ft |
+  |---|---|---|---|---|
+  | LeBron James | 0.171 | 0.307 | 0.192 | 0.330 |
+  | Stephen Curry | 0.122 | 0.196 | 0.124 | 0.558 |
+  | James Harden | 0.168 | 0.248 | 0.156 | 0.428 |
+
+  Only training shots are used for this; no validation or test shot informs it.
+- **Five seeds per synthetic player** (seeds 0–4 for the draws): 15 datasets,
+  all reported.
+- **Thresholds unchanged from v3a**, applied to every dataset:
+  - relative θ error ≤ 0.25;
+  - band-share gap (total variation, on that player's validation contexts) ≤ 0.05;
+  - identifiability: information positive definite, no |correlation| above
+    0.95, and each standard error within 25% of its estimate (or 0.25 absolute
+    when the estimate is below 1, in the linear form).
+- **v3b(a) passes only if all 15 datasets pass all three checks.** Profile
+  likelihoods are reported for the first seed of each player.
+
+**(b) Robustness (reported, does not gate).** The same 15 datasets with v2's
+added noise (Gaussian, sd 1.0 ft and 0.25 s, clipped to the feasible set),
+refitted and scored on the same checks. This shows how much
+misspecification the estimates tolerate.
+
+**Then, only if (a) passes:** fit the three real players and run v3a's
+registered criteria (b) and (c) unchanged (`scripts/v3_real.py`). If either
+fails, no claim is made about the players' preferences.
 
 ## The three attempts, in order
 
