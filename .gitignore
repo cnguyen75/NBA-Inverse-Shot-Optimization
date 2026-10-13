@@ -14,3 +14,6 @@ __pycache__/
 .ipynb_checkpoints/
 .venv/
 .DS_Store
+
+# Images the course notebook writes when run
+notebooks/*.png
