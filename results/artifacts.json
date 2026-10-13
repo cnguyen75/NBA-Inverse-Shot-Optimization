@@ -1,0 +1,120 @@
+{
+ "command": "python scripts/diagnose_artifacts.py",
+ "split": "validation only; test not used",
+ "players": {
+  "lebron james": {
+   "zone_label_mismatch_share": {
+    "real_shots": 0.0,
+    "alternatives": 0.1031
+   },
+   "validation": {
+    "all features": {
+     "network": {
+      "accuracy": 0.7521,
+      "roc_auc": 0.749,
+      "log_loss": 0.5082,
+      "top1_within_shot": 0.5437,
+      "top1_chance": 0.287
+     },
+     "logistic_regression_auc": 0.544
+    },
+    "without zone flags": {
+     "network": {
+      "accuracy": 0.735,
+      "roc_auc": 0.7378,
+      "log_loss": 0.5149,
+      "top1_within_shot": 0.5,
+      "top1_chance": 0.287
+     },
+     "logistic_regression_auc": 0.5385
+    },
+    "zone recomputed from distance": {
+     "network": {
+      "accuracy": 0.747,
+      "roc_auc": 0.7534,
+      "log_loss": 0.5047,
+      "top1_within_shot": 0.5312,
+      "top1_chance": 0.287
+     },
+     "logistic_regression_auc": 0.5169
+    }
+   }
+  },
+  "stephen curry": {
+   "zone_label_mismatch_share": {
+    "real_shots": 0.0,
+    "alternatives": 0.1004
+   },
+   "validation": {
+    "all features": {
+     "network": {
+      "accuracy": 0.7368,
+      "roc_auc": 0.6959,
+      "log_loss": 0.5308,
+      "top1_within_shot": 0.4375,
+      "top1_chance": 0.2865
+     },
+     "logistic_regression_auc": 0.577
+    },
+    "without zone flags": {
+     "network": {
+      "accuracy": 0.7231,
+      "roc_auc": 0.7048,
+      "log_loss": 0.5305,
+      "top1_within_shot": 0.45,
+      "top1_chance": 0.2865
+     },
+     "logistic_regression_auc": 0.5795
+    },
+    "zone recomputed from distance": {
+     "network": {
+      "accuracy": 0.7299,
+      "roc_auc": 0.6991,
+      "log_loss": 0.5319,
+      "top1_within_shot": 0.4562,
+      "top1_chance": 0.2865
+     },
+     "logistic_regression_auc": 0.5776
+    }
+   }
+  },
+  "james harden": {
+   "zone_label_mismatch_share": {
+    "real_shots": 0.0,
+    "alternatives": 0.0943
+   },
+   "validation": {
+    "all features": {
+     "network": {
+      "accuracy": 0.7869,
+      "roc_auc": 0.802,
+      "log_loss": 0.4669,
+      "top1_within_shot": 0.6687,
+      "top1_chance": 0.2922
+     },
+     "logistic_regression_auc": 0.6037
+    },
+    "without zone flags": {
+     "network": {
+      "accuracy": 0.7577,
+      "roc_auc": 0.7754,
+      "log_loss": 0.4888,
+      "top1_within_shot": 0.6188,
+      "top1_chance": 0.2922
+     },
+     "logistic_regression_auc": 0.5719
+    },
+    "zone recomputed from distance": {
+     "network": {
+      "accuracy": 0.7852,
+      "roc_auc": 0.8123,
+      "log_loss": 0.4582,
+      "top1_within_shot": 0.6625,
+      "top1_chance": 0.2922
+     },
+     "logistic_regression_auc": 0.6496
+    }
+   }
+  }
+ }
+}
