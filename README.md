@@ -522,6 +522,50 @@ The decision uses the primary point estimate.
   meeting that rule is computed and reported before the fits, and must be at
   least 0.80.
 
+### Power-check result: the v3b gate was underpowered
+
+An ideal estimator (Cramér–Rao errors at the true parameters, no fitting)
+passes one v3b dataset with probability 0.92 (LeBron James), 0.94 (Stephen
+Curry) and 0.94 (James Harden). Its θ error never exceeded 0.25 in 6,000
+draws; every failure came from the band-share limit. Requiring all 15
+datasets to pass, the **ideal estimator passes the v3b gate with probability
+0.36** (Monte Carlo 95% interval 0.30–0.42; the linearised cross-check gives
+0.35). That is below 0.80, so the gate was underpowered and Step 2 runs
+(`results/v3b_power.json`).
+
+For scale: the ideal estimator's median gap is about 0.03 and its 95th
+percentile just over 0.05, the v3b limit itself. v3b's 13 of 15 is what an
+ideal estimator would typically produce. v3b remains a failed gate as
+registered.
+
+## v3c: the v3b test with a powered band-share limit (pre-registered)
+
+The band-share limit was revised **after v3b missed narrowly**, because the
+power check showed the old limit sat at the ideal estimator's 95th percentile,
+making the 15-of-15 gate a 36% shot even for a perfect method. The revision
+follows the rule committed in the power-check note before its numbers were
+seen. This section was written and committed before any v3c fit.
+
+- **Same method and code path, no tuning:** `nbashots/v3.py`, and the band
+  solve and checks from `scripts/v3b_synthetic.py`. The same three synthetic
+  players, with the same true parameters, contexts and sample sizes.
+- **Unchanged checks:** parameter-error limit 0.25, and the same
+  identifiability check.
+- **Band-share limit per player**, from the rule (99th percentile of the
+  ideal estimator's gap, rounded up to 0.005; `results/v3c_limits.json`):
+  LeBron James **0.070**, Stephen Curry **0.065**, James Harden **0.070**.
+- **Fresh seeds:** 10–29 for every player, 20 per player, 60 datasets, all
+  reported. None of v3b's seeds 0–4 are reused.
+- **Pass rule:** v3c passes if, for every player, at least 18 of 20 datasets
+  pass all checks. The ideal estimator meets this with probability 0.999.
+- **If v3c passes:** fit the three real players and run the real-data criteria
+  exactly as pre-registered in v3a: log-likelihood against EP alone and
+  against the empirical distribution; decision prediction; the context-shift
+  test (`scripts/v3_real.py`, unchanged). If either fails, no claim is made
+  about preferences.
+- **If v3c fails,** the project ends. There is no further defect in the test to
+  point at.
+
 ## The attempts, in order
 
 | | Question | Outcome |

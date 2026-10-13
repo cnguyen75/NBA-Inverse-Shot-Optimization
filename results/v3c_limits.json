@@ -1,0 +1,27 @@
+{
+ "command": "python scripts/v3c_limits.py",
+ "seeds_per_player": 20,
+ "pass_rule": "at least 18 of 20 per player, all three players",
+ "players": {
+  "lebron james": {
+   "gap_q99": 0.0655,
+   "limit": 0.07,
+   "ideal_per_dataset_pass": 0.9935,
+   "ideal_meets_18_of_20": 0.9997
+  },
+  "stephen curry": {
+   "gap_q99": 0.0632,
+   "limit": 0.065,
+   "ideal_per_dataset_pass": 0.9935,
+   "ideal_meets_18_of_20": 0.9997
+  },
+  "james harden": {
+   "gap_q99": 0.0652,
+   "limit": 0.07,
+   "ideal_per_dataset_pass": 0.995,
+   "ideal_meets_18_of_20": 0.9999
+  }
+ },
+ "power_ideal_estimator": 0.9993,
+ "power_at_least_0.80": true
+}
