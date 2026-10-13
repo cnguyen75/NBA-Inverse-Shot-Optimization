@@ -270,7 +270,7 @@ directly (a flat cost is still ruled out, since choices would then follow EP
 alone); and fewer cost parameters, or context that moves decisions more.
 `scripts/v2_real.py` is written but was not run.
 
-## v3: a choice model over the feasible set (pre-registered)
+## v3: a choice model over the feasible set (pre-registered; stopped at criterion a)
 
 The last attempt. v1 and v2 above are kept as they are. This section was
 written and committed before any v3 code or results. If criterion (a) or the
@@ -353,6 +353,46 @@ interval excludes zero and the predicted difference has the same sign and
 lies within that interval. v3 adds something beyond frequencies only if it
 explains at least one shift for at least two players. A split with no
 observed shift (interval includes zero) is reported as "nothing to explain".
+
+### Result: stopped at criteria (a) and (a′)
+
+All three synthetic players failed both recovery and the identifiability
+check, so v3 was not fitted to the real players, and (b) and (c) were not
+run (`results/v3_synthetic.json`; `scripts/v3_real.py` is written but has
+never been run).
+
+| Synthetic player | θ error (limit 0.25) | Band-share gap (limit 0.05) | Largest correlation | Failing standard error |
+|---|---|---|---|---|
+| prefers the rim | 5.57 | 0.04 | 0.74 | long-two cost, unbounded |
+| prefers 3-point range | 0.38 | 0.03 | 0.87 | long-two cost |
+| mid-range pull-up | 0.59 | 0.08 | 0.68 | long-two cost |
+
+What the diagnostics show:
+
+1. **No ridge this time.** Unlike v2, the parameters are not traded off along
+   a ridge: the largest correlation is 0.87, and every profile-likelihood
+   interval is bounded except one. The choice model fixed the problem it was
+   meant to fix.
+2. **The long-two band cost could not be pinned down, because the synthetic
+   players almost never shot from there:** 0.2%, 0.6% and 5% of their shots
+   fell in 14–22 ft. This is a weakness of the synthetic players chosen at
+   pre-registration, not of the data. The real players take 14–21% of their
+   shots from that band, but the rule was to stop.
+3. **Noise at band edges biases the costs.** v2's noise (1 ft) moves shots
+   across the 4, 14 and 22 ft edges. That pulls band costs toward zero and
+   makes choices look more random: T came out 0.165 and 0.173 against a true
+   0.15. Even where the decisions were well predicted (band-share gaps of 0.03
+   to 0.04), the parameters were off by 38% or more.
+
+## The three attempts, in order
+
+| | Question | Outcome |
+|---|---|---|
+| **v1** (course, June 2025; audited October 2026) | Can a network tell a player's real shot from generated alternatives? | Yes on held-out shots: real shot ranked first 49–64% vs 26–32% for logistic regression, chance about 29%. Partly learns the generator; the "KKT" terms never touched the cost. |
+| **v2** | Can KKT conditions with a cost inside recover a player's cost? | No. Failed pre-registered synthetic recovery: a ridge of costs fits equally well, and stationarity is only local. |
+| **v3** | Can a five-parameter choice model over the feasible set recover it? | No. Failed pre-registered synthetic recovery: no ridge, but the long-two cost was not pinned down from synthetic players who rarely shot there, and edge noise biased the rest. |
+
+No player-cost claim is made from v2 or v3.
 
 ## Data
 
