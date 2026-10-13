@@ -384,7 +384,7 @@ What the diagnostics show:
    0.15. Even where the decisions were well predicted (band-share gaps of 0.03
    to 0.04), the parameters were off by 38% or more.
 
-## v3b: the same model, retested with a redesigned synthetic test (pre-registered)
+## v3b: the same model, retested with a redesigned synthetic test (pre-registered; stopped at criterion a)
 
 **Why the v3a test was redesigned.** v3a failed its synthetic test, and its
 results above stay in the record. The diagnostics showed two flaws in the
@@ -439,15 +439,46 @@ misspecification the estimates tolerate.
 registered criteria (b) and (c) unchanged (`scripts/v3_real.py`). If either
 fails, no claim is made about the players' preferences.
 
-## The three attempts, in order
+### v3b result: 13 of 15 synthetic datasets passed; the gate required all 15
+
+The real players were not fitted, and no claim is made about their
+preferences (`results/v3b_synthetic.json`; `scripts/v3_real.py` has still
+never been run). Every synthetic player's band shares matched its target
+within 0.001.
+
+| Check (15 datasets: 3 players × 5 seeds) | Well-specified (gating) | With v2's noise (not gating) |
+|---|---|---|
+| θ error ≤ 0.25 | 15 of 15 (largest 0.096) | 15 of 15 (largest 0.171) |
+| Identifiability (positive definite, \|corr\| ≤ 0.95, SEs) | 15 of 15 (largest \|corr\| 0.935) | – |
+| Band-share gap ≤ 0.05 | 13 of 15 (misses: 0.056 and 0.052) | 8 of 15 (largest 0.068) |
+| **All checks** | **13 of 15: fails the gate** | 8 of 15 |
+
+Profile likelihoods (first seed) are bounded for every parameter of every
+synthetic player.
+
+What this shows:
+- **The model is identifiable and its parameters are recovered.** All 15
+  well-specified datasets recovered θ within 10% with no ridge, and v2's
+  extra noise only raised the error to at most 17%. The redesign removed
+  both of v3a's flaws.
+- **The band-share check failed narrowly.** At 450–505 shots per player,
+  parameter errors of 6–8% shift the predicted band shares by about five
+  percentage points, the size of the 0.05 limit set in v3a. Two of 15
+  datasets landed just over it. The limit was kept as pre-registered.
+- **Under the rule, v3 stops here.** Whether to read 13 of 15 as close
+  enough is a judgment the pre-registration ruled out, so v3b is reported as
+  a failed gate.
+
+## The attempts, in order
 
 | | Question | Outcome |
 |---|---|---|
 | **v1** (course, June 2025; audited October 2026) | Can a network tell a player's real shot from generated alternatives? | Yes on held-out shots: real shot ranked first 49–64% vs 26–32% for logistic regression, chance about 29%. Partly learns the generator; the "KKT" terms never touched the cost. |
 | **v2** | Can KKT conditions with a cost inside recover a player's cost? | No. Failed pre-registered synthetic recovery: a ridge of costs fits equally well, and stationarity is only local. |
-| **v3** | Can a five-parameter choice model over the feasible set recover it? | No. Failed pre-registered synthetic recovery: no ridge, but the long-two cost was not pinned down from synthetic players who rarely shot there, and edge noise biased the rest. |
+| **v3a** | Can a five-parameter choice model recover it? | Stopped at a flawed test: synthetic players who almost never used one band, plus double-counted noise. |
+| **v3b** | The same model, with a redesigned test | Parameters recovered and identifiable in all 15 synthetic datasets, but 2 of 15 missed the band-share limit narrowly (0.056, 0.052 vs 0.05); the gate required all 15, so the real players were not fitted. |
 
-No player-cost claim is made from v2 or v3.
+No player-cost claim is made from v2, v3a or v3b.
 
 ## Data
 
