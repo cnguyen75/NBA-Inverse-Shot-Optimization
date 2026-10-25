@@ -66,7 +66,7 @@ def profile(
         w0[j] = v
         _, ll, _, _ = fit(data, free=free, w0=w0, iters=20)
         drops.append(round(ll_max - ll, 3))
-    inside = [v for v, dr in zip(vals, drops) if dr <= 1.92]
+    inside = [v for v, dr in zip(vals, drops, strict=False) if dr <= 1.92]
     return {
         "values": np.round(vals, 4).tolist(),
         "loglik_drop": drops,
@@ -106,9 +106,11 @@ def main() -> None:
         out[name] = {
             "contexts_from": PLAYERS[i],
             "n_train": len(tr),
-            "theta_true": dict(zip(THETA, th_true)),
-            "theta_hat": dict(zip(THETA, np.round(th_hat, 4).tolist())),
-            "theta_se": dict(zip(THETA, np.round(np.sqrt(np.diag(cov_th)), 4).tolist())),
+            "theta_true": dict(zip(THETA, th_true, strict=False)),
+            "theta_hat": dict(zip(THETA, np.round(th_hat, 4).tolist(), strict=False)),
+            "theta_se": dict(
+                zip(THETA, np.round(np.sqrt(np.diag(cov_th)), 4).tolist(), strict=False)
+            ),
             "relative_theta_error": round(rel, 4),
             "band_shares_true": np.round(sh_true, 4).tolist(),
             "band_shares_hat": np.round(sh_hat, 4).tolist(),

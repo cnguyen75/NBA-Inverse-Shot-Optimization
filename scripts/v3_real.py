@@ -77,7 +77,7 @@ def main() -> None:
     out = {}
     for i, p in enumerate(PLAYERS):
         rng = np.random.default_rng(SEED + 400 + i)
-        sets = dict(zip(("train", "val", "test"), split_player(df, p, SEED + i)))
+        sets = dict(zip(("train", "val", "test"), split_player(df, p, SEED + i), strict=False))
         D, K, G = {}, {}, {}
         for name, ix in sets.items():
             D[name] = torch.tensor(df.iloc[ix][["s", "t"]].to_numpy(), dtype=torch.float32)

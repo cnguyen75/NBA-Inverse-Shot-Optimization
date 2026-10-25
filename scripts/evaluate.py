@@ -200,7 +200,7 @@ def main() -> None:
                 }
                 for v, h in hist.items()
             },
-            lr_coef=dict(zip(FEATURES, lr.coef_[0].round(4).tolist())),
+            lr_coef=dict(zip(FEATURES, lr.coef_[0].round(4).tolist(), strict=False)),
             counts={
                 k: {
                     "shots": int(d["group_id"].nunique()),

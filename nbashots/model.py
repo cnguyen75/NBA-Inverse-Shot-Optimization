@@ -134,7 +134,7 @@ def train(
     gen = torch.Generator().manual_seed(seed)
     hist = {"train_bce": [], "val_bce": [], "val_comp_slackness": []}
     best, best_state, bad = float("inf"), None, 0
-    for ep in range(epochs):
+    for _ep in range(epochs):
         model.train()
         perm = torch.randperm(len(X), generator=gen)
         tot = n = 0
@@ -191,4 +191,4 @@ def gradient_importance(model: KKTCostFunction, x: np.ndarray) -> dict[str, floa
     out = model(xt).mean()
     g = torch.autograd.grad(out, xt)[0].abs().mean(0).numpy()
     g = g / (g.sum() + 1e-10)
-    return dict(zip(FEATURES, g.round(4).tolist()))
+    return dict(zip(FEATURES, g.round(4).tolist(), strict=False))

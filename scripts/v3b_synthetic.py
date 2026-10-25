@@ -81,13 +81,13 @@ def checks(
         w,
         H,
         {
-            "theta_hat": dict(zip(THETA, np.round(th_hat, 4).tolist())),
+            "theta_hat": dict(zip(THETA, np.round(th_hat, 4).tolist(), strict=False)),
             "relative_theta_error": round(rel, 4),
             "band_share_tv": round(tv, 4),
             "identifiability_passed": ident["passed"],
             "max_abs_correlation": ident["max_abs_correlation"],
-            "se_linear_form": dict(zip(PARAMS, ident["se"])),
-            "se_ok": dict(zip(PARAMS, ident["se_ok"])),
+            "se_linear_form": dict(zip(PARAMS, ident["se"], strict=False)),
+            "se_ok": dict(zip(PARAMS, ident["se_ok"], strict=False)),
             "passed": bool(rel <= 0.25 and tv <= 0.05 and ident["passed"]),
         },
     )
@@ -112,7 +112,7 @@ def main() -> None:
             "target_shares": TARGET[p],
             "matched_shares": np.round(sh, 4).tolist(),
             "shares_within_0.01": matched,
-            "theta_true": dict(zip(THETA, np.round(theta(w_true), 4).tolist())),
+            "theta_true": dict(zip(THETA, np.round(theta(w_true), 4).tolist(), strict=False)),
             "well_specified": {},
             "with_v2_noise": {},
         }

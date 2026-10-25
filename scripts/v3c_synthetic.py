@@ -32,7 +32,8 @@ MIN_PASS = 18
 
 def main() -> None:
     torch.set_num_threads(4)
-    limits = json.load(open(os.path.join(ROOT, "results", "v3c_limits.json")))["players"]
+    with open(os.path.join(ROOT, "results", "v3c_limits.json")) as f:
+        limits = json.load(f)["players"]
     df, _ = load(SHOT_LOGS)
     ep = load_ep()
     out = {}
@@ -72,7 +73,7 @@ def main() -> None:
         n_pass = sum(r["passed_v3c"] for r in rows.values())
         out[p] = {
             "limit": lim,
-            "theta_true": dict(zip(THETA, np.round(theta(w_true), 4).tolist())),
+            "theta_true": dict(zip(THETA, np.round(theta(w_true), 4).tolist(), strict=False)),
             "matched_shares": np.round(sh, 4).tolist(),
             "datasets": rows,
             "n_passed": n_pass,

@@ -29,7 +29,8 @@ DISPLAY = {
 
 def main() -> None:
     shots = load_shots()
-    res = json.load(open(os.path.join(ROOT, "results", "results.json")))
+    with open(os.path.join(ROOT, "results", "results.json")) as f:
+        res = json.load(f)
     players = []
     for p in PLAYERS:
         s = shots[shots["player_name"] == p]

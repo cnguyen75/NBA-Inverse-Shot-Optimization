@@ -274,8 +274,10 @@ def zones_svg(demo: dict[str, Any]) -> str:
 
 
 def main() -> None:
-    res = json.load(open(os.path.join(ROOT, "results", "results.json")))
-    demo = json.load(open(sys.argv[1]))
+    with open(os.path.join(ROOT, "results", "results.json")) as f:
+        res = json.load(f)
+    with open(sys.argv[1]) as f:
+        demo = json.load(f)
     os.makedirs(os.path.join(ROOT, "figures"), exist_ok=True)
     for name, svg in (
         ("comparison", comparison_svg(res)),

@@ -113,17 +113,20 @@ def fit_ep(
     torch.manual_seed(seed)
     m = EPModel(num.mean(0), num.std(0), a, c, hidden)
     opt = torch.optim.Adam(m.parameters(), lr=lr)
-    tens = lambda d: (
-        torch.tensor(d["s"].to_numpy(), dtype=torch.float32),  # noqa: E731
-        torch.tensor(d["t"].to_numpy(), dtype=torch.float32),
-        torch.from_numpy(context(d)),
-        torch.tensor(d["FGM"].to_numpy(), dtype=torch.float32),
-    )
+
+    def tens(d: pd.DataFrame) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+        return (
+            torch.tensor(d["s"].to_numpy(), dtype=torch.float32),
+            torch.tensor(d["t"].to_numpy(), dtype=torch.float32),
+            torch.from_numpy(context(d)),
+            torch.tensor(d["FGM"].to_numpy(), dtype=torch.float32),
+        )
+
     S, T, X, Y = tens(train)
     Sv, Tv, Xv, Yv = tens(val)
     bce = nn.BCEWithLogitsLoss()
     best, state, gen = 1e9, None, torch.Generator().manual_seed(seed)
-    for ep in range(epochs):
+    for _ep in range(epochs):
         m.train()
         perm = torch.randperm(len(S), generator=gen)
         for i in range(0, len(S), batch):
