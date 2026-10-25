@@ -15,6 +15,9 @@ and at most 3 x n_alternatives draws are tried, so some shots get fewer.
 The real shot has IS_CHOSEN = 1, its alternatives 0, sharing a group_id.
 """
 
+from collections.abc import Mapping
+from typing import Any
+
 import numpy as np
 import pandas as pd
 
@@ -22,12 +25,12 @@ import pandas as pd
 SCALE = {"SHOT_DIST": 35.0, "CLOSE_DEF_DIST": 10.0, "SHOT_CLOCK": 24.0, "player_fg_pct": 1.0}
 
 
-def _dist(a, b):
+def _dist(a: Mapping[str, float], b: Mapping[str, float]) -> float:
     return np.sqrt(sum(((a[k] - b[k]) / s) ** 2 for k, s in SCALE.items()))
 
 
 class AlternativeGenerator:
-    def __init__(self, shots, seed=0):
+    def __init__(self, shots: pd.DataFrame, seed: int = 0) -> None:
         self.rng = np.random.default_rng(seed)
         z = shots.groupby("shot_zone")
         self.zone = {
@@ -42,7 +45,7 @@ class AlternativeGenerator:
         }
         self.stats = {"alternatives": 0, "rejected": 0}
 
-    def _one(self, shot, clutch, game_clock):
+    def _one(self, shot: pd.Series, clutch: bool, game_clock: float) -> dict[str, Any]:
         r = self.rng
         zones = list(self.zone)
         zone = (
@@ -70,7 +73,9 @@ class AlternativeGenerator:
             "shot_zone": zone,
         }
 
-    def for_shots(self, shots, n_alternatives=3, min_difference=0.2):
+    def for_shots(
+        self, shots: pd.DataFrame, n_alternatives: int = 3, min_difference: float = 0.2
+    ) -> pd.DataFrame:
         rows = []
         for gid, (_, s) in enumerate(shots.iterrows()):
             real = {

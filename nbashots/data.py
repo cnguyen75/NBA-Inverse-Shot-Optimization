@@ -30,7 +30,7 @@ ZONE_LABELS = {
 }
 
 
-def clock_to_sec(s):
+def clock_to_sec(s: str | float) -> float:
     try:
         m, sec = s.split(":")
         return int(m) * 60 + float(sec)
@@ -38,11 +38,11 @@ def clock_to_sec(s):
         return np.nan
 
 
-def game_stage(period):
+def game_stage(period: int) -> str:
     return "early" if period in (1, 2) else ("mid" if period == 3 else "late")
 
 
-def load_shots(path=SHOT_LOGS, players=PLAYERS):
+def load_shots(path: str = SHOT_LOGS, players: list[str] = PLAYERS) -> pd.DataFrame:
     """Shot logs for `players`, with the derived columns.
 
     Differences from the course notebook (both were bugs there):

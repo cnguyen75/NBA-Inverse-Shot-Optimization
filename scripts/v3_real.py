@@ -40,27 +40,27 @@ from nbashots.v3 import (  # noqa: E402
 N_BOOT = 1000
 
 
-def empirical(d_tr, k_tr):
+def empirical(d_tr: torch.Tensor, k_tr: torch.Tensor) -> tuple[np.ndarray, np.ndarray]:
     si, ti = cell_index(d_tr, k_tr)
     ps = np.bincount(si.numpy(), minlength=len(S_GRID)) + 1.0
     pt = np.bincount(ti.numpy(), minlength=len(T_GRID)) + 1.0
     return ps / ps.sum(), pt / pt.sum()
 
 
-def empirical_ll(ps, pt, d, k):
+def empirical_ll(ps: np.ndarray, pt: np.ndarray, d: torch.Tensor, k: torch.Tensor) -> np.ndarray:
     si, ti = cell_index(d, k)
     cum = np.cumsum(pt)
     tmax = np.floor(k.numpy() / 0.1 + 1e-6).astype(int)
     return np.log(ps[si.numpy()]) + np.log(pt[ti.numpy()]) - np.log(cum[tmax])
 
 
-def boot(x, rng):
+def boot(x: np.ndarray, rng: np.random.Generator) -> list[float]:
     n = len(x)
     m = [x[rng.integers(0, n, n)].mean() for _ in range(N_BOOT)]
     return [round(float(np.percentile(m, 2.5)), 4), round(float(np.percentile(m, 97.5)), 4)]
 
 
-def boot_diff_groups(y, g, rng):
+def boot_diff_groups(y: np.ndarray, g: np.ndarray, rng: np.random.Generator) -> list[float]:
     """95% interval of mean(y[g]) - mean(y[~g]), resampling within groups."""
     a, b = y[g], y[~g]
     m = [
@@ -70,7 +70,7 @@ def boot_diff_groups(y, g, rng):
     return [round(float(np.percentile(m, 2.5)), 3), round(float(np.percentile(m, 97.5)), 3)]
 
 
-def main():
+def main() -> None:
     torch.set_num_threads(4)
     df, _ = load(SHOT_LOGS)
     ep = load_ep()

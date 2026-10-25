@@ -23,6 +23,7 @@ Loss variants:
 """
 
 import numpy as np
+import pandas as pd
 import torch
 import torch.nn as nn
 
@@ -44,7 +45,7 @@ FEATURES = [
 ]
 
 
-def feature_matrix(df, mean, std):
+def feature_matrix(df: pd.DataFrame, mean: np.ndarray, std: np.ndarray) -> np.ndarray:
     num = (df[NUMERIC].to_numpy(float) - mean) / std
     zone = np.stack(
         [
@@ -61,7 +62,7 @@ class KKTCostFunction(nn.Module):
     """The notebook's network: 12 -> 64 -> 32 -> 16 -> 1, LeakyReLU(0.2),
     BatchNorm, Dropout 0.3/0.2/0.2, three softplus dual variables."""
 
-    def __init__(self, input_dim=12, n_constraints=3):
+    def __init__(self, input_dim: int = 12, n_constraints: int = 3) -> None:
         super().__init__()
         layers, prev = [], input_dim
         for i, h in enumerate([64, 32, 16]):
@@ -77,14 +78,14 @@ class KKTCostFunction(nn.Module):
         self.network = nn.Sequential(*layers, last)
         self.dual_vars = nn.Parameter(torch.zeros(n_constraints))
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.network(x).squeeze(-1)
 
-    def duals(self):
+    def duals(self) -> torch.Tensor:
         return nn.functional.softplus(self.dual_vars)
 
 
-def _repo_penalties(model, x):
+def _repo_penalties(model: KKTCostFunction, x: torch.Tensor) -> dict[str, torch.Tensor]:
     """The notebook's get_kkt_violations, unchanged."""
     x = x.detach().clone().requires_grad_(True)
     out = model(x)
@@ -99,7 +100,7 @@ def _repo_penalties(model, x):
     }
 
 
-def _fixed_penalties(model, raw):
+def _fixed_penalties(model: KKTCostFunction, raw: torch.Tensor) -> dict[str, torch.Tensor]:
     """Complementary slackness and primal feasibility as violations, in real units."""
     g = [-raw[:, 2], raw[:, 1] - 10.0, raw[:, 0] - 35.0]
     lam = model.duals()
@@ -110,20 +111,20 @@ def _fixed_penalties(model, raw):
 
 
 def train(
-    x_tr,
-    y_tr,
-    raw_tr,
-    x_va,
-    y_va,
-    raw_va,
-    variant="repo",
-    seed=0,
-    lr=1e-3,
-    epochs=200,
-    batch=32,
-    patience=20,
-    kkt_weight=0.1,
-):
+    x_tr: np.ndarray,
+    y_tr: np.ndarray,
+    raw_tr: np.ndarray,
+    x_va: np.ndarray,
+    y_va: np.ndarray,
+    raw_va: np.ndarray,
+    variant: str = "repo",
+    seed: int = 0,
+    lr: float = 1e-3,
+    epochs: int = 200,
+    batch: int = 32,
+    patience: int = 20,
+    kkt_weight: float = 0.1,
+) -> tuple[KKTCostFunction, dict[str, list[float]]]:
     torch.manual_seed(seed)
     model = KKTCostFunction()
     opt = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=0.01)
@@ -178,12 +179,12 @@ def train(
     return model, hist
 
 
-def predict_logit(model, x):
+def predict_logit(model: KKTCostFunction, x: np.ndarray) -> np.ndarray:
     with torch.no_grad():
         return model(torch.from_numpy(x)).numpy()
 
 
-def gradient_importance(model, x):
+def gradient_importance(model: KKTCostFunction, x: np.ndarray) -> dict[str, float]:
     """The notebook's importance: mean |d cost / d input| per feature, normalised to sum 1."""
     model.eval()
     xt = torch.from_numpy(x).requires_grad_(True)

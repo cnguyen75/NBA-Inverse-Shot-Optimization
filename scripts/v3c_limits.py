@@ -21,7 +21,7 @@ PLAYERS = ["lebron james", "stephen curry", "james harden"]
 N_SEEDS, MIN_PASS = 20, 18
 
 
-def main():
+def main() -> None:
     z = np.load(os.path.join(ROOT, "models", "v3b_power_draws.npz"))
     out, power = {}, 1.0
     for p in PLAYERS:

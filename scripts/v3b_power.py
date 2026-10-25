@@ -33,7 +33,7 @@ from nbashots.v3 import ChoiceData, band_shares, identifiability, theta  # noqa:
 N_EXACT, N_LINEAR, MC_SEED = 2000, 100_000, 2026
 
 
-def main():
+def main() -> None:
     torch.set_num_threads(4)
     df, _ = load(SHOT_LOGS)
     ep = load_ep()

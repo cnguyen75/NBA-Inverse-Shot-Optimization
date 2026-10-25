@@ -58,13 +58,13 @@ N_BOOT = 1000
 IMPORTANCE_SEEDS = 5
 
 
-def split_groups(n_groups, rng):
+def split_groups(n_groups: int, rng: np.random.Generator) -> tuple[set[int], set[int], set[int]]:
     g = rng.permutation(n_groups)
     a, b = int(0.6 * n_groups), int(0.8 * n_groups)
     return set(g[:a]), set(g[a:b]), set(g[b:])
 
 
-def metrics(y, p, groups):
+def metrics(y: np.ndarray, p: np.ndarray, groups: np.ndarray) -> dict[str, float]:
     p = np.clip(p, 1e-7, 1 - 1e-7)
     top, chance = [], []
     for g in np.unique(groups):
@@ -80,7 +80,9 @@ def metrics(y, p, groups):
     }
 
 
-def bootstrap(y, preds, groups, rng):
+def bootstrap(
+    y: np.ndarray, preds: dict[str, np.ndarray], groups: np.ndarray, rng: np.random.Generator
+) -> tuple[dict[str, dict[str, list[float]]], dict[str, dict[str, list[float]]]]:
     """Percentile intervals for each model's metrics and paired differences vs logistic regression."""
     ug = np.unique(groups)
     idx = {g: np.flatnonzero(groups == g) for g in ug}
@@ -101,7 +103,7 @@ def bootstrap(y, preds, groups, rng):
                 }
             )
 
-    def ci(rows, key):
+    def ci(rows: list[dict[str, float]], key: str) -> list[float]:
         v = np.array([r[key] for r in rows], float)
         v = v[~np.isnan(v)]
         return [round(float(np.percentile(v, 2.5)), 4), round(float(np.percentile(v, 97.5)), 4)]
@@ -116,7 +118,7 @@ def bootstrap(y, preds, groups, rng):
     return out, out_d
 
 
-def majority_ci(y, groups, rng):
+def majority_ci(y: np.ndarray, groups: np.ndarray, rng: np.random.Generator) -> list[float]:
     """Bootstrap interval for the accuracy of always predicting "not chosen"."""
     ug = np.unique(groups)
     idx = {g: np.flatnonzero(groups == g) for g in ug}
@@ -127,11 +129,11 @@ def majority_ci(y, groups, rng):
     return [round(float(np.percentile(acc, 2.5)), 4), round(float(np.percentile(acc, 97.5)), 4)]
 
 
-def r4(d):
+def r4(d: dict[str, float]) -> dict[str, float]:
     return {k: round(v, 4) for k, v in d.items()}
 
 
-def main():
+def main() -> None:
     t0 = time.time()
     torch.set_num_threads(1)
     shots = load_shots()

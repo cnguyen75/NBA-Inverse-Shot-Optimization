@@ -6,6 +6,9 @@ b_three, c), so the log-likelihood is concave and is maximised by Newton's
 method with the exact gradient and information matrix.
 """
 
+from collections.abc import Iterator, Sequence
+from typing import Any
+
 import numpy as np
 import torch
 
@@ -17,14 +20,14 @@ THETA = ["T", "beta_mid", "beta_long", "beta_three", "alpha"]
 BAND_EDGES = (4.0, 14.0, 22.0)
 
 
-def band_features():
+def band_features() -> torch.Tensor:
     s = S_GRID.double()
     return torch.stack(
         [((s > 4) & (s <= 14)).double(), ((s > 14) & (s <= 22)).double(), (s > 22).double()], 1
     )  # (141, 3)
 
 
-def features(epg):
+def features(epg: torch.Tensor) -> torch.Tensor:
     """Per-cell feature tensor f with u = f·w: (n, 141, 241, 5), float64."""
     n, ns, nt = epg.shape
     bands = band_features()[None, :, None, :].expand(n, ns, nt, 3)
@@ -32,11 +35,11 @@ def features(epg):
     return torch.cat([epg.double()[..., None], -bands, -t], -1)
 
 
-def feasible(k):
+def feasible(k: torch.Tensor) -> torch.Tensor:
     return T_GRID[None, None, :] <= k[:, None, None] + 1e-6  # (n, 1, 241)
 
 
-def cell_index(d, k):
+def cell_index(d: torch.Tensor, k: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
     """Nearest grid cell for observed decisions, t capped at the last feasible cell."""
     si = torch.clamp(torch.round(d[:, 0] / 0.25).long(), 0, len(S_GRID) - 1)
     tmax = torch.floor(k / 0.1 + 1e-6).long()
@@ -47,13 +50,17 @@ def cell_index(d, k):
 class ChoiceData:
     """Holds features, feasibility and observed cells for one set of shots, in chunks."""
 
-    def __init__(self, epg, k, d=None, chunk=24):
+    def __init__(
+        self, epg: torch.Tensor, k: torch.Tensor, d: torch.Tensor | None = None, chunk: int = 24
+    ) -> None:
         self.chunks = []
         for i in range(0, len(epg), chunk):
             e, kk = epg[i : i + chunk], k[i : i + chunk]
             self.chunks.append((e, kk, None if d is None else cell_index(d[i : i + chunk], kk)))
 
-    def stats(self, w, need_info=True):
+    def stats(
+        self, w: torch.Tensor | Sequence[float], need_info: bool = True
+    ) -> tuple[float, torch.Tensor, torch.Tensor, torch.Tensor | None]:
         """Log-likelihood, gradient, information, and per-shot probabilities' moments."""
         w = torch.as_tensor(w, dtype=torch.float64)
         ll, grad, info = (
@@ -81,7 +88,7 @@ class ChoiceData:
                 info += (eff - ef[:, :, None] * ef[:, None, :]).sum(0)
         return ll, grad, info, (torch.cat(per_shot) if per_shot else None)
 
-    def probs(self, w):
+    def probs(self, w: torch.Tensor | Sequence[float]) -> Iterator[torch.Tensor]:
         """Yield per-chunk probability grids (n, 141, 241)."""
         w = torch.as_tensor(w, dtype=torch.float64)
         for e, kk, _ in self.chunks:
@@ -90,7 +97,13 @@ class ChoiceData:
             yield torch.softmax(u.reshape(len(u), -1), 1).reshape(u.shape)
 
 
-def fit(data, free=None, w0=None, iters=50, tol=1e-8):
+def fit(
+    data: ChoiceData,
+    free: Sequence[int] | None = None,
+    w0: Sequence[float] | None = None,
+    iters: int = 50,
+    tol: float = 1e-8,
+) -> tuple[torch.Tensor, float, torch.Tensor, torch.Tensor | None]:
     """Newton's method on the concave log-likelihood. `free` selects parameters to fit;
     the others stay at w0 (default 0, except a = 5)."""
     free = list(range(5)) if free is None else list(free)
@@ -116,12 +129,12 @@ def fit(data, free=None, w0=None, iters=50, tol=1e-8):
     return w, ll, H, per
 
 
-def theta(w):
+def theta(w: torch.Tensor) -> np.ndarray:
     a = w[0]
     return np.array([1 / a, w[1] / a, w[2] / a, w[3] / a, w[4] / a], dtype=float)
 
 
-def theta_cov(w, H):
+def theta_cov(w: torch.Tensor, H: torch.Tensor) -> tuple[np.ndarray, np.ndarray]:
     """Delta-method covariance of theta from the inverse information of w."""
     a = float(w[0])
     J = np.zeros((5, 5))
@@ -133,7 +146,7 @@ def theta_cov(w, H):
     return J @ cov_w @ J.T, cov_w
 
 
-def identifiability(w, H):
+def identifiability(w: torch.Tensor, H: torch.Tensor) -> dict[str, Any]:
     Hn = H.numpy()
     eig = np.linalg.eigvalsh(Hn)
     cov = np.linalg.pinv(Hn)
@@ -154,7 +167,7 @@ def identifiability(w, H):
     }
 
 
-def band_shares(data, w):
+def band_shares(data: ChoiceData, w: torch.Tensor) -> np.ndarray:
     """Mean predicted share of each distance band (rim, mid, long, three) over the shots."""
     bands = torch.cat([1 - band_features().sum(1, keepdim=True), band_features()], 1)  # (141, 4)
     tot, n = torch.zeros(4, dtype=torch.float64), 0
@@ -164,14 +177,14 @@ def band_shares(data, w):
     return (tot / n).numpy()
 
 
-def expected_s(data, w):
+def expected_s(data: ChoiceData, w: torch.Tensor) -> np.ndarray:
     out = []
     for p in data.probs(w):
         out.append((p.sum(2) * S_GRID.double()).sum(1))
     return torch.cat(out).numpy()
 
 
-def sample(data, w, rng):
+def sample(data: ChoiceData, w: torch.Tensor, rng: np.random.Generator) -> torch.Tensor:
     """Draw one cell per shot from the choice distribution; returns (s, t)."""
     out = []
     for p in data.probs(w):

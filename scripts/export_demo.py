@@ -27,7 +27,7 @@ DISPLAY = {
 }
 
 
-def main():
+def main() -> None:
     shots = load_shots()
     res = json.load(open(os.path.join(ROOT, "results", "results.json")))
     players = []

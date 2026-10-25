@@ -13,8 +13,10 @@ decision, with paired bootstrap intervals (1,000 resamples).
 import json
 import os
 import sys
+from typing import Any
 
 import numpy as np
+import pandas as pd
 import torch
 
 
@@ -24,13 +26,23 @@ sys.path.insert(0, os.path.join(ROOT, "scripts"))
 from v2_synthetic import RHOS, SEED, load_ep  # noqa: E402
 
 from nbashots.data import SHOT_LOGS  # noqa: E402
-from nbashots.v2 import PLAYERS, context, ep_grid, fit_cost, load, solve, split_player  # noqa: E402
+from nbashots.v2 import (  # noqa: E402
+    PLAYERS,
+    EPModel,
+    QuadCost,
+    context,
+    ep_grid,
+    fit_cost,
+    load,
+    solve,
+    split_player,
+)
 
 
 N_BOOT = 1000
 
 
-def tens(df, ix):
+def tens(df: pd.DataFrame, ix: np.ndarray) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     d = torch.tensor(df.iloc[ix][["s", "t"]].to_numpy(), dtype=torch.float32)
     return (
         d,
@@ -39,14 +51,14 @@ def tens(df, ix):
     )
 
 
-def stationarity_r2(ep, stat, d, ctx):
+def stationarity_r2(ep: EPModel, stat: float, d: torch.Tensor, ctx: torch.Tensor) -> float:
     """1 - (mean squared stationarity residual, fitted multipliers) / (variance of grad EP)."""
     dd = d.clone().requires_grad_(True)
     g_ep = torch.autograd.grad(ep.ep(dd[:, 0], dd[:, 1], ctx).sum(), dd)[0]
     return 1 - stat / float(((g_ep - g_ep.mean(0)) ** 2).sum(1).mean())
 
 
-def describe(cost):
+def describe(cost: QuadCost) -> dict[str, Any]:
     th = cost.theta()
     b, Q = np.array(th[:2]), np.array([[th[2], th[3]], [th[3], th[4]]])
     out = {"b": np.round(b, 5).tolist(), "Q": np.round(Q, 6).tolist()}
@@ -57,7 +69,7 @@ def describe(cost):
     return out
 
 
-def boot_diff(err_a, err_b, rng):
+def boot_diff(err_a: np.ndarray, err_b: np.ndarray, rng: np.random.Generator) -> list[float]:
     n = len(err_a)
     d = [
         float((err_a[i] - err_b[i]).mean()) for i in (rng.integers(0, n, n) for _ in range(N_BOOT))
@@ -65,7 +77,7 @@ def boot_diff(err_a, err_b, rng):
     return [round(float(np.percentile(d, 2.5)), 4), round(float(np.percentile(d, 97.5)), 4)]
 
 
-def main():
+def main() -> None:
     torch.set_num_threads(4)
     df, _ = load(SHOT_LOGS)
     ep = load_ep()

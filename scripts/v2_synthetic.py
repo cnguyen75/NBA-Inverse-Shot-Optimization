@@ -19,8 +19,10 @@ A noise-free run is also reported, for diagnosis only.
 import json
 import os
 import sys
+from typing import Any
 
 import numpy as np
+import pandas as pd
 import torch
 
 
@@ -51,7 +53,7 @@ SYNTHETIC = {  # name: (mu in (ft, s), Q in points per ft^2 / s^2), fixed before
 }
 
 
-def load_ep():
+def load_ep() -> EPModel:
     ck = torch.load(os.path.join(ROOT, "models", "v2_ep.pt"), weights_only=False)
     sd = ck["state_dict"]
     m = EPModel(sd["mean"].numpy(), sd["std"].numpy(), ck["three_a"], ck["three_c"])
@@ -61,20 +63,24 @@ def load_ep():
     return m.eval()
 
 
-def true_cost(mu, Q):
+def true_cost(
+    mu: tuple[float, float], Q: tuple[tuple[float, float], tuple[float, float]]
+) -> QuadCost:
     Q = torch.tensor(Q)
     L = torch.linalg.cholesky(Q)
     b = -(Q @ torch.tensor(mu))
     return QuadCost(b=b.tolist(), L=L.tolist())
 
 
-def noisy(d, k, rng):
+def noisy(d: torch.Tensor, k: torch.Tensor, rng: np.random.Generator) -> torch.Tensor:
     s = np.clip(d[:, 0].numpy() + rng.normal(0, NOISE[0], len(d)), 0, S_MAX)
     t = np.clip(d[:, 1].numpy() + rng.normal(0, NOISE[1], len(d)), 0, k.numpy())
     return torch.tensor(np.stack([s, t], 1), dtype=torch.float32)
 
 
-def run(ep, df, noise, rng):
+def run(
+    ep: EPModel, df: pd.DataFrame, noise: bool, rng: np.random.Generator
+) -> dict[str, dict[str, Any]]:
     out = {}
     for i, (name, (mu, Q)) in enumerate(SYNTHETIC.items()):
         tr, va, _ = split_player(df, PLAYERS[i], SEED + i)
@@ -136,7 +142,7 @@ def run(ep, df, noise, rng):
     return out
 
 
-def main():
+def main() -> None:
     torch.set_num_threads(4)
     df, _ = load(SHOT_LOGS)
     ep = load_ep()

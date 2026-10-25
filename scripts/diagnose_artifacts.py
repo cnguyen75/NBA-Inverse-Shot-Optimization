@@ -37,11 +37,11 @@ from nbashots.data import PLAYERS, ZONE_BINS, ZONES, load_shots  # noqa: E402
 from nbashots.model import NUMERIC, feature_matrix, predict_logit, train  # noqa: E402
 
 
-def consistent_zone(d):
+def consistent_zone(d: pd.Series) -> pd.Series:
     return pd.cut(d, bins=ZONE_BINS, labels=ZONES).astype(str)
 
 
-def main():
+def main() -> None:
     shots = load_shots()
     gen = AlternativeGenerator(shots, seed=SEED)
     out = {}

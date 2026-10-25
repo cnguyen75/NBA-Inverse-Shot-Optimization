@@ -30,7 +30,7 @@ SEEDS = range(10, 30)
 MIN_PASS = 18
 
 
-def main():
+def main() -> None:
     torch.set_num_threads(4)
     limits = json.load(open(os.path.join(ROOT, "results", "v3c_limits.json")))["players"]
     df, _ = load(SHOT_LOGS)

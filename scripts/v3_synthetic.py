@@ -14,6 +14,7 @@ values across ±4 standard errors, the others refitted.
 import json
 import os
 import sys
+from typing import Any
 
 import numpy as np
 import torch
@@ -47,12 +48,14 @@ SYNTHETIC = {  # (T, beta_mid, beta_long, beta_three, alpha), as pre-registered
 }
 
 
-def to_w(th):
+def to_w(th: tuple[float, ...]) -> list[float]:
     T = th[0]
     return [1 / T, th[1] / T, th[2] / T, th[3] / T, th[4] / T]
 
 
-def profile(data, w, H, j, n=9):
+def profile(
+    data: ChoiceData, w: torch.Tensor, H: torch.Tensor, j: int, n: int = 9
+) -> dict[str, Any]:
     se = float(np.sqrt(abs(np.linalg.pinv(H.numpy())[j, j])))
     ll_max = data.stats(w, need_info=False)[0]
     vals = np.linspace(float(w[j]) - 4 * se, float(w[j]) + 4 * se, n)
@@ -72,7 +75,7 @@ def profile(data, w, H, j, n=9):
     }
 
 
-def main():
+def main() -> None:
     torch.set_num_threads(4)
     df, _ = load(SHOT_LOGS)
     ep = load_ep()

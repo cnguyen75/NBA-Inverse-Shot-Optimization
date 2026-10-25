@@ -7,6 +7,8 @@ feet and touch time in seconds, to maximise EP(s, t; x) - C(s, t) subject to
 EP is a frozen expected-points model; C(d) = b.d + 0.5 d'Qd with Q = LL'.
 """
 
+from collections.abc import Sequence
+
 import numpy as np
 import pandas as pd
 import torch
@@ -20,7 +22,7 @@ PLAYERS = ["lebron james", "stephen curry", "james harden"]
 
 
 # ------------------------------------------------------------------ data
-def load(path):
+def load(path: str) -> tuple[pd.DataFrame, int]:
     """All shots passing the pre-registered filters, with decision and context columns."""
     df = pd.read_csv(path)
     n0 = len(df)
@@ -40,7 +42,9 @@ def load(path):
     return df, n0
 
 
-def split_player(df, player, seed):
+def split_player(
+    df: pd.DataFrame, player: str, seed: int
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """60/20/20 by shot for one player (pre-registered)."""
     idx = np.flatnonzero(df["player_name"].to_numpy() == player)
     idx = np.random.default_rng(seed).permutation(idx)
@@ -55,7 +59,14 @@ class EPModel(nn.Module):
     EP = P(make) * (2 + P(three | s)). All inputs in real units; standardised inside.
     """
 
-    def __init__(self, mean, std, three_a, three_c, hidden=32):
+    def __init__(
+        self,
+        mean: np.ndarray,
+        std: np.ndarray,
+        three_a: float,
+        three_c: float,
+        hidden: int = 32,
+    ) -> None:
         super().__init__()
         self.register_buffer("mean", torch.tensor(mean, dtype=torch.float32))
         self.register_buffer("std", torch.tensor(std, dtype=torch.float32))
@@ -68,25 +79,33 @@ class EPModel(nn.Module):
             nn.Linear(hidden, 1),
         )
 
-    def logit(self, s, t, ctx):
+    def logit(self, s: torch.Tensor, t: torch.Tensor, ctx: torch.Tensor) -> torch.Tensor:
         """s, t: (...,) tensors; ctx: (..., 6) = def, k, late, three player flags."""
         num = torch.stack([s, t, ctx[..., 0], ctx[..., 1]], -1)
         num = (num - self.mean) / self.std
         return self.net(torch.cat([num, ctx[..., 2:]], -1)).squeeze(-1)
 
-    def p_three(self, s):
+    def p_three(self, s: torch.Tensor) -> torch.Tensor:
         return torch.sigmoid(self.three_a * (s - self.three_c))
 
-    def ep(self, s, t, ctx):
+    def ep(self, s: torch.Tensor, t: torch.Tensor, ctx: torch.Tensor) -> torch.Tensor:
         return torch.sigmoid(self.logit(s, t, ctx)) * (2 + self.p_three(s))
 
 
-def context(df):
+def context(df: pd.DataFrame) -> np.ndarray:
     flags = np.stack([(df["player_name"] == p).to_numpy(float) for p in PLAYERS], 1)
     return np.concatenate([df[["def", "k", "late"]].to_numpy(float), flags], 1).astype(np.float32)
 
 
-def fit_ep(train, val, seed=0, hidden=32, epochs=60, lr=3e-3, batch=2048):
+def fit_ep(
+    train: pd.DataFrame,
+    val: pd.DataFrame,
+    seed: int = 0,
+    hidden: int = 32,
+    epochs: int = 60,
+    lr: float = 3e-3,
+    batch: int = 2048,
+) -> tuple[EPModel, float]:
     from sklearn.linear_model import LogisticRegression
 
     lr3 = LogisticRegression().fit(train[["s"]], train["three"])
@@ -131,32 +150,45 @@ def fit_ep(train, val, seed=0, hidden=32, epochs=60, lr=3e-3, batch=2048):
 class QuadCost(nn.Module):
     """C(d) = b.d + 0.5 d'Qd, Q = LL' (positive semi-definite). d = (s ft, t s)."""
 
-    def __init__(self, b=(0.0, 0.0), L=((0.05, 0.0), (0.0, 0.05))):
+    def __init__(
+        self,
+        b: Sequence[float] = (0.0, 0.0),
+        L: Sequence[Sequence[float]] = ((0.05, 0.0), (0.0, 0.05)),
+    ) -> None:
         super().__init__()
         self.b = nn.Parameter(torch.tensor(b, dtype=torch.float32))
         self.L = nn.Parameter(torch.tensor(L, dtype=torch.float32))
 
-    def Q(self):
+    def Q(self) -> torch.Tensor:
         L = torch.tril(self.L)
         return L @ L.T
 
-    def forward(self, d):
+    def forward(self, d: torch.Tensor) -> torch.Tensor:
         return d @ self.b + 0.5 * ((d @ self.Q()) * d).sum(-1)
 
-    def theta(self):
+    def theta(self) -> np.ndarray:
         Q = self.Q().detach()
         return np.array(
             [self.b[0].item(), self.b[1].item(), Q[0, 0].item(), Q[0, 1].item(), Q[1, 1].item()]
         )
 
 
-def constraints(d, k):
+def constraints(d: torch.Tensor, k: torch.Tensor) -> torch.Tensor:
     """g_j(d) <= 0 in feet and seconds: -s, s - 35, -t, t - k."""
     s, t = d[:, 0], d[:, 1]
     return torch.stack([-s, s - S_MAX, -t, t - k], 1)
 
 
-def kkt_loss(ep_model, cost, d, ctx, k, lam_raw, rho, stationarity=True):
+def kkt_loss(
+    ep_model: EPModel,
+    cost: QuadCost,
+    d: torch.Tensor,
+    ctx: torch.Tensor,
+    k: torch.Tensor,
+    lam_raw: torch.Tensor,
+    rho: float,
+    stationarity: bool = True,
+) -> tuple[torch.Tensor, float, float, torch.Tensor]:
     """Mean squared stationarity residual + rho * complementary slackness, multipliers >= 0."""
     d = d.clone().requires_grad_(True)
     lam = nn.functional.softplus(lam_raw)  # dual feasibility
@@ -171,7 +203,17 @@ def kkt_loss(ep_model, cost, d, ctx, k, lam_raw, rho, stationarity=True):
     return loss, stat.detach().item(), cs.detach().item(), r.detach()
 
 
-def fit_cost(ep_model, d, ctx, k, rho, stationarity=True, steps=3000, lr=0.01, seed=0):
+def fit_cost(
+    ep_model: EPModel,
+    d: torch.Tensor,
+    ctx: torch.Tensor,
+    k: torch.Tensor,
+    rho: float,
+    stationarity: bool = True,
+    steps: int = 3000,
+    lr: float = 0.01,
+    seed: int = 0,
+) -> tuple[QuadCost, dict[str, float]]:
     torch.manual_seed(seed)
     cost = QuadCost()
     lam_raw = nn.Parameter(torch.full((len(d), 4), -4.0))
@@ -186,7 +228,7 @@ def fit_cost(ep_model, d, ctx, k, rho, stationarity=True, steps=3000, lr=0.01, s
 
 
 # ------------------------------------------------------------------ forward solver
-def ep_grid(ep_model, ctx, chunk=16):
+def ep_grid(ep_model: EPModel, ctx: torch.Tensor, chunk: int = 16) -> torch.Tensor:
     """EP on the (s, t) grid for each context row: (n, 141, 241)."""
     ns, nt = len(S_GRID), len(T_GRID)
     ss, tt = torch.meshgrid(S_GRID, T_GRID, indexing="ij")
@@ -200,7 +242,7 @@ def ep_grid(ep_model, ctx, chunk=16):
     return torch.cat(out)
 
 
-def solve(epg, k, cost):
+def solve(epg: torch.Tensor, k: torch.Tensor, cost: QuadCost | None) -> torch.Tensor:
     """argmax of EP - C over the grid with t <= k. Returns (n, 2) decisions."""
     ss, tt = torch.meshgrid(S_GRID, T_GRID, indexing="ij")
     with torch.no_grad():

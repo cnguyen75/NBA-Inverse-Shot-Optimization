@@ -15,6 +15,7 @@ import os
 import sys
 
 import numpy as np
+import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import log_loss
 import torch
@@ -29,7 +30,9 @@ from nbashots.v2 import PLAYERS, context, fit_ep, load, split_player  # noqa: E4
 SEED = 42
 
 
-def splits(df):
+def splits(
+    df: pd.DataFrame,
+) -> tuple[dict[str, tuple[np.ndarray, np.ndarray, np.ndarray]], np.ndarray, np.ndarray]:
     out = {}
     for i, p in enumerate(PLAYERS):
         out[p] = split_player(df, p, SEED + i)
@@ -39,7 +42,7 @@ def splits(df):
     return out, others[n:], others[:n]
 
 
-def main():
+def main() -> None:
     torch.set_num_threads(4)
     df, n0 = load(SHOT_LOGS)
     sp, oth_tr, oth_ho = splits(df)

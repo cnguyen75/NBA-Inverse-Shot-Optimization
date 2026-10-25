@@ -15,6 +15,7 @@ the unchanged v3a checks.
 import json
 import os
 import sys
+from typing import Any
 
 import numpy as np
 import torch
@@ -50,7 +51,9 @@ SEEDS = range(5)
 NOISE = (1.0, 0.25)
 
 
-def solve_bands(data, target, iters=200):
+def solve_bands(
+    data: ChoiceData, target: list[float], iters: int = 200
+) -> tuple[torch.Tensor, np.ndarray]:
     """Band costs (linear form) so the predicted shares match `target`; rim fixed at 0."""
     a, c = 1 / T_TRUE, ALPHA_TRUE / T_TRUE
     b = np.zeros(3)
@@ -66,7 +69,9 @@ def solve_bands(data, target, iters=200):
     return torch.tensor([a, *b, c], dtype=torch.float64), sh
 
 
-def checks(data_fit, va_data, w_true):
+def checks(
+    data_fit: ChoiceData, va_data: ChoiceData, w_true: torch.Tensor
+) -> tuple[torch.Tensor, torch.Tensor, dict[str, Any]]:
     w, ll, H, _ = fit(data_fit)
     th_hat, th_true = theta(w), theta(w_true)
     rel = float(np.linalg.norm(th_hat - th_true) / np.linalg.norm(th_true))
@@ -88,7 +93,7 @@ def checks(data_fit, va_data, w_true):
     )
 
 
-def main():
+def main() -> None:
     torch.set_num_threads(4)
     df, _ = load(SHOT_LOGS)
     ep = load_ep()

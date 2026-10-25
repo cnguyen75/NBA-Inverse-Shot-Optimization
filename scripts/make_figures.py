@@ -10,6 +10,7 @@ Archivo; direct labels, no legend.
 import json
 import os
 import sys
+from typing import Any
 from xml.sax.saxutils import escape
 
 
@@ -23,7 +24,7 @@ NAMES = {
 }
 
 
-def head(W, H, title, desc):
+def head(W: int, H: int, title: str, desc: str) -> list[str]:
     return [
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" '
         f'role="img" aria-labelledby="t d" font-family="Archivo, sans-serif">',
@@ -33,14 +34,22 @@ def head(W, H, title, desc):
     ]
 
 
-def text(x, y, s, size=14, fill=INK, weight="400", anchor="start"):
+def text(
+    x: float,
+    y: float,
+    s: str,
+    size: float = 14,
+    fill: str = INK,
+    weight: str = "400",
+    anchor: str = "start",
+) -> str:
     return (
         f'<text x="{x:.1f}" y="{y:.1f}" font-size="{size}" font-weight="{weight}" '
         f'fill="{fill}" text-anchor="{anchor}">{escape(s)}</text>'
     )
 
 
-def comparison_svg(res):
+def comparison_svg(res: dict[str, Any]) -> str:
     chosen = f"model_{res['chosen_variant']}"
     rows = [
         ("majority_class", "Always “not chosen”", GREY),
@@ -156,7 +165,7 @@ def comparison_svg(res):
     return "\n".join(p)
 
 
-def importance_svg(demo):
+def importance_svg(demo: dict[str, Any]) -> str:
     feats = list(demo["players"][0]["importance"]["values"])
     order = sorted(
         feats, key=lambda f: -sum(pl["importance"]["values"][f]["mean"] for pl in demo["players"])
@@ -206,7 +215,7 @@ def importance_svg(demo):
     return "\n".join(p)
 
 
-def zones_svg(demo):
+def zones_svg(demo: dict[str, Any]) -> str:
     W, top = 1000, 96
     band_h = 30
     zones = [z["label"] for z in demo["players"][0]["zones"]]
@@ -263,7 +272,7 @@ def zones_svg(demo):
     return "\n".join(p)
 
 
-def main():
+def main() -> None:
     res = json.load(open(os.path.join(ROOT, "results", "results.json")))
     demo = json.load(open(sys.argv[1]))
     os.makedirs(os.path.join(ROOT, "figures"), exist_ok=True)
