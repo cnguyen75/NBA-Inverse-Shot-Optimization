@@ -21,20 +21,38 @@ Loss variants:
   "kkt_fixed" BCE + 0.1 x (mean |lambda_j g_j| + mean relu(g_j)) with g_j in
               real units (seconds and feet), best weights restored.
 """
+
 import numpy as np
 import torch
 import torch.nn as nn
 
+
 NUMERIC = ["SHOT_DIST", "CLOSE_DEF_DIST", "SHOT_CLOCK", "DRIBBLES", "player_fg_pct"]
-FEATURES = ["Shot Distance", "Defender Distance", "Shot Clock", "Dribbles", "Player FG%",
-            "Restricted Area", "Mid Range", "Long Range", "Deep Three",
-            "Early Game", "Mid Game", "Late Game"]
+FEATURES = [
+    "Shot Distance",
+    "Defender Distance",
+    "Shot Clock",
+    "Dribbles",
+    "Player FG%",
+    "Restricted Area",
+    "Mid Range",
+    "Long Range",
+    "Deep Three",
+    "Early Game",
+    "Mid Game",
+    "Late Game",
+]
 
 
 def feature_matrix(df, mean, std):
     num = (df[NUMERIC].to_numpy(float) - mean) / std
-    zone = np.stack([(df["shot_zone"] == z).to_numpy(float)
-                     for z in ("restricted_area", "mid_range", "long_range", "deep_three")], 1)
+    zone = np.stack(
+        [
+            (df["shot_zone"] == z).to_numpy(float)
+            for z in ("restricted_area", "mid_range", "long_range", "deep_three")
+        ],
+        1,
+    )
     stage = np.stack([(df["game_stage"] == s).to_numpy(float) for s in ("early", "mid", "late")], 1)
     return np.concatenate([num, zone, stage], 1).astype(np.float32)
 
@@ -47,8 +65,12 @@ class KKTCostFunction(nn.Module):
         super().__init__()
         layers, prev = [], input_dim
         for i, h in enumerate([64, 32, 16]):
-            layers += [nn.Linear(prev, h), nn.LeakyReLU(0.2), nn.BatchNorm1d(h),
-                       nn.Dropout(0.3 if i == 0 else 0.2)]
+            layers += [
+                nn.Linear(prev, h),
+                nn.LeakyReLU(0.2),
+                nn.BatchNorm1d(h),
+                nn.Dropout(0.3 if i == 0 else 0.2),
+            ]
             prev = h
         last = nn.Linear(prev, 1)
         nn.init.xavier_uniform_(last.weight, gain=0.01)
@@ -70,21 +92,38 @@ def _repo_penalties(model, x):
     lam = model.duals()
     lagr = out.mean() + sum(lam[i] * g[i].mean() for i in range(3))
     grad = torch.autograd.grad(lagr, x, create_graph=True)[0]
-    return {"stationarity": grad.norm(dim=1).mean(),
-            "comp_slackness": sum(lam[i] * g[i].mean() for i in range(3)),
-            "primal_feasibility": sum(torch.relu(gi.mean()) for gi in g)}
+    return {
+        "stationarity": grad.norm(dim=1).mean(),
+        "comp_slackness": sum(lam[i] * g[i].mean() for i in range(3)),
+        "primal_feasibility": sum(torch.relu(gi.mean()) for gi in g),
+    }
 
 
 def _fixed_penalties(model, raw):
     """Complementary slackness and primal feasibility as violations, in real units."""
     g = [-raw[:, 2], raw[:, 1] - 10.0, raw[:, 0] - 35.0]
     lam = model.duals()
-    return {"comp_slackness": sum((lam[i] * g[i]).abs().mean() for i in range(3)),
-            "primal_feasibility": sum(torch.relu(gi).mean() for gi in g)}
+    return {
+        "comp_slackness": sum((lam[i] * g[i]).abs().mean() for i in range(3)),
+        "primal_feasibility": sum(torch.relu(gi).mean() for gi in g),
+    }
 
 
-def train(x_tr, y_tr, raw_tr, x_va, y_va, raw_va, variant="repo", seed=0,
-          lr=1e-3, epochs=200, batch=32, patience=20, kkt_weight=0.1):
+def train(
+    x_tr,
+    y_tr,
+    raw_tr,
+    x_va,
+    y_va,
+    raw_va,
+    variant="repo",
+    seed=0,
+    lr=1e-3,
+    epochs=200,
+    batch=32,
+    patience=20,
+    kkt_weight=0.1,
+):
     torch.manual_seed(seed)
     model = KKTCostFunction()
     opt = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=0.01)
@@ -98,14 +137,15 @@ def train(x_tr, y_tr, raw_tr, x_va, y_va, raw_va, variant="repo", seed=0,
         model.train()
         perm = torch.randperm(len(X), generator=gen)
         tot = n = 0
-        for i in range(0, len(X) - batch + 1, batch):          # drop_last, as in the notebook
-            idx = perm[i:i + batch]
+        for i in range(0, len(X) - batch + 1, batch):  # drop_last, as in the notebook
+            idx = perm[i : i + batch]
             out = model(X[idx])
             loss = bce(out, Y[idx])
             if variant == "repo":
                 p = _repo_penalties(model, X[idx])
-                loss = loss + kkt_weight * (p["stationarity"] + p["comp_slackness"]
-                                            + p["primal_feasibility"])
+                loss = loss + kkt_weight * (
+                    p["stationarity"] + p["comp_slackness"] + p["primal_feasibility"]
+                )
             elif variant == "kkt_fixed":
                 p = _fixed_penalties(model, R[idx])
                 loss = loss + kkt_weight * (p["comp_slackness"] + p["primal_feasibility"])
@@ -117,8 +157,11 @@ def train(x_tr, y_tr, raw_tr, x_va, y_va, raw_va, variant="repo", seed=0,
         model.eval()
         with torch.no_grad():
             vb = bce(model(Xv), Yv).item()
-        cs = (_repo_penalties(model, Xv)["comp_slackness"].item() if variant == "repo"
-              else _fixed_penalties(model, Rv)["comp_slackness"].item())
+        cs = (
+            _repo_penalties(model, Xv)["comp_slackness"].item()
+            if variant == "repo"
+            else _fixed_penalties(model, Rv)["comp_slackness"].item()
+        )
         hist["train_bce"].append(tot / n)
         hist["val_bce"].append(vb)
         hist["val_comp_slackness"].append(cs)

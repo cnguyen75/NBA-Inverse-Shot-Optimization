@@ -1,5 +1,7 @@
 line-length = 100
 target-version = "py311"
+# The course notebook is the submitted artefact and is not reformatted.
+extend-exclude = ["notebooks"]
 
 [lint]
 select = [

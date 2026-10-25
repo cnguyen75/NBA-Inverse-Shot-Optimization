@@ -10,6 +10,7 @@ Band shares for the total-variation check use that player's validation
 contexts. Profile likelihoods: each parameter of the linear form fixed at 9
 values across ±4 standard errors, the others refitted.
 """
+
 import json
 import os
 import sys
@@ -17,17 +18,29 @@ import sys
 import numpy as np
 import torch
 
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
-from nbashots.data import SHOT_LOGS  # noqa: E402
-from nbashots.v2 import PLAYERS, S_MAX, context, ep_grid, load, split_player  # noqa: E402
-from nbashots.v3 import (PARAMS, THETA, ChoiceData, band_shares, fit, identifiability,  # noqa: E402
-                         sample, theta, theta_cov)
 from v2_synthetic import SEED, load_ep  # noqa: E402
 
+from nbashots.data import SHOT_LOGS  # noqa: E402
+from nbashots.v2 import PLAYERS, S_MAX, context, ep_grid, load, split_player  # noqa: E402
+from nbashots.v3 import (  # noqa: E402
+    PARAMS,
+    THETA,
+    ChoiceData,
+    band_shares,
+    fit,
+    identifiability,
+    sample,
+    theta,
+    theta_cov,
+)
+
+
 NOISE = (1.0, 0.25)
-SYNTHETIC = {   # (T, beta_mid, beta_long, beta_three, alpha), as pre-registered
+SYNTHETIC = {  # (T, beta_mid, beta_long, beta_three, alpha), as pre-registered
     "rim": (0.15, 0.15, 0.25, 0.30, 0.05),
     "three": (0.15, 0.05, 0.05, -0.20, 0.05),
     "midrange_pullup": (0.15, -0.15, -0.15, 0.10, 0.02),
@@ -51,9 +64,12 @@ def profile(data, w, H, j, n=9):
         _, ll, _, _ = fit(data, free=free, w0=w0, iters=20)
         drops.append(round(ll_max - ll, 3))
     inside = [v for v, dr in zip(vals, drops) if dr <= 1.92]
-    return {"values": np.round(vals, 4).tolist(), "loglik_drop": drops,
-            "interval_95": [round(min(inside), 4), round(max(inside), 4)] if inside else None,
-            "bounded": bool(drops[0] > 1.92 and drops[-1] > 1.92)}
+    return {
+        "values": np.round(vals, 4).tolist(),
+        "loglik_drop": drops,
+        "interval_95": [round(min(inside), 4), round(max(inside), 4)] if inside else None,
+        "bounded": bool(drops[0] > 1.92 and drops[-1] > 1.92),
+    }
 
 
 def main():
@@ -65,7 +81,9 @@ def main():
     for i, (name, th_true) in enumerate(SYNTHETIC.items()):
         tr, va, _ = split_player(df, PLAYERS[i], SEED + i)
         ctx_tr, ctx_va = (torch.from_numpy(context(df.iloc[x])) for x in (tr, va))
-        k_tr, k_va = (torch.tensor(df.iloc[x]["k"].to_numpy(), dtype=torch.float32) for x in (tr, va))
+        k_tr, k_va = (
+            torch.tensor(df.iloc[x]["k"].to_numpy(), dtype=torch.float32) for x in (tr, va)
+        )
         g_tr, g_va = ep_grid(ep, ctx_tr), ep_grid(ep, ctx_va)
         w_true = torch.tensor(to_w(th_true), dtype=torch.float64)
         d = sample(ChoiceData(g_tr, k_tr), w_true, rng)
@@ -83,7 +101,8 @@ def main():
         ident = identifiability(w, H)
         prof = {PARAMS[j]: profile(data, w, H, j) for j in range(5)}
         out[name] = {
-            "contexts_from": PLAYERS[i], "n_train": len(tr),
+            "contexts_from": PLAYERS[i],
+            "n_train": len(tr),
             "theta_true": dict(zip(THETA, th_true)),
             "theta_hat": dict(zip(THETA, np.round(th_hat, 4).tolist())),
             "theta_se": dict(zip(THETA, np.round(np.sqrt(np.diag(cov_th)), 4).tolist())),
@@ -92,17 +111,34 @@ def main():
             "band_shares_hat": np.round(sh_hat, 4).tolist(),
             "band_share_tv": round(tv, 4),
             "recovered": bool(rel <= 0.25 and tv <= 0.05),
-            "identifiability": ident, "profiles": prof,
+            "identifiability": ident,
+            "profiles": prof,
         }
-        print(name, {k: out[name][k] for k in ("relative_theta_error", "band_share_tv", "recovered")},
-              "ident", ident["passed"], "max|corr|", ident["max_abs_correlation"],
-              "profiles bounded", all(p["bounded"] for p in prof.values()))
-    res = {"command": "python scripts/v3_synthetic.py", "noise_sd": NOISE, "players": out,
-           "criterion_a_passed": all(v["recovered"] for v in out.values()),
-           "identifiability_passed": all(v["identifiability"]["passed"] for v in out.values())}
+        print(
+            name,
+            {k: out[name][k] for k in ("relative_theta_error", "band_share_tv", "recovered")},
+            "ident",
+            ident["passed"],
+            "max|corr|",
+            ident["max_abs_correlation"],
+            "profiles bounded",
+            all(p["bounded"] for p in prof.values()),
+        )
+    res = {
+        "command": "python scripts/v3_synthetic.py",
+        "noise_sd": NOISE,
+        "players": out,
+        "criterion_a_passed": all(v["recovered"] for v in out.values()),
+        "identifiability_passed": all(v["identifiability"]["passed"] for v in out.values()),
+    }
     with open(os.path.join(ROOT, "results", "v3_synthetic.json"), "w") as f:
         json.dump(res, f, indent=1)
-    print("criterion (a):", res["criterion_a_passed"], " identifiability (a'):", res["identifiability_passed"])
+    print(
+        "criterion (a):",
+        res["criterion_a_passed"],
+        " identifiability (a'):",
+        res["identifiability_passed"],
+    )
 
 
 if __name__ == "__main__":

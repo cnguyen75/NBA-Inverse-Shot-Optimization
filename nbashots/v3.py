@@ -5,10 +5,12 @@ with a = 1/T, b = β/T, c = α/T. Utility is linear in w = (a, b_mid, b_long,
 b_three, c), so the log-likelihood is concave and is maximised by Newton's
 method with the exact gradient and information matrix.
 """
+
 import numpy as np
 import torch
 
 from .v2 import S_GRID, T_GRID
+
 
 PARAMS = ["a", "b_mid", "b_long", "b_three", "c"]
 THETA = ["T", "beta_mid", "beta_long", "beta_three", "alpha"]
@@ -17,8 +19,9 @@ BAND_EDGES = (4.0, 14.0, 22.0)
 
 def band_features():
     s = S_GRID.double()
-    return torch.stack([((s > 4) & (s <= 14)).double(), ((s > 14) & (s <= 22)).double(),
-                        (s > 22).double()], 1)                      # (141, 3)
+    return torch.stack(
+        [((s > 4) & (s <= 14)).double(), ((s > 14) & (s <= 22)).double(), (s > 22).double()], 1
+    )  # (141, 3)
 
 
 def features(epg):
@@ -30,7 +33,7 @@ def features(epg):
 
 
 def feasible(k):
-    return T_GRID[None, None, :] <= k[:, None, None] + 1e-6          # (n, 1, 241)
+    return T_GRID[None, None, :] <= k[:, None, None] + 1e-6  # (n, 1, 241)
 
 
 def cell_index(d, k):
@@ -47,13 +50,17 @@ class ChoiceData:
     def __init__(self, epg, k, d=None, chunk=24):
         self.chunks = []
         for i in range(0, len(epg), chunk):
-            e, kk = epg[i:i + chunk], k[i:i + chunk]
-            self.chunks.append((e, kk, None if d is None else cell_index(d[i:i + chunk], kk)))
+            e, kk = epg[i : i + chunk], k[i : i + chunk]
+            self.chunks.append((e, kk, None if d is None else cell_index(d[i : i + chunk], kk)))
 
     def stats(self, w, need_info=True):
         """Log-likelihood, gradient, information, and per-shot probabilities' moments."""
         w = torch.as_tensor(w, dtype=torch.float64)
-        ll, grad, info = 0.0, torch.zeros(5, dtype=torch.float64), torch.zeros(5, 5, dtype=torch.float64)
+        ll, grad, info = (
+            0.0,
+            torch.zeros(5, dtype=torch.float64),
+            torch.zeros(5, 5, dtype=torch.float64),
+        )
         per_shot = []
         for e, kk, obs in self.chunks:
             f = features(e)
@@ -92,9 +99,9 @@ def fit(data, free=None, w0=None, iters=50, tol=1e-8):
     for _ in range(iters):
         ll, g, H, _ = data.stats(w)
         g, H = g[free], H[np.ix_(free, free)]
-        step = torch.linalg.pinv(H) @ g      # pseudo-inverse: a band with no shots makes H singular
+        step = torch.linalg.pinv(H) @ g  # pseudo-inverse: a band with no shots makes H singular
         t = 1.0
-        while True:                                          # backtracking line search
+        while True:  # backtracking line search
             w_new = w.clone()
             w_new[free] = w[free] + t * step
             ll_new = data.stats(w_new, need_info=False)[0]
@@ -118,9 +125,9 @@ def theta_cov(w, H):
     """Delta-method covariance of theta from the inverse information of w."""
     a = float(w[0])
     J = np.zeros((5, 5))
-    J[0, 0] = -1 / a ** 2
+    J[0, 0] = -1 / a**2
     for j in range(1, 5):
-        J[j, 0] = -float(w[j]) / a ** 2
+        J[j, 0] = -float(w[j]) / a**2
         J[j, j] = 1 / a
     cov_w = np.linalg.pinv(H.numpy())
     return J @ cov_w @ J.T, cov_w
@@ -135,17 +142,21 @@ def identifiability(w, H):
     off = np.abs(corr - np.eye(5)).max()
     wn = np.abs(w.numpy())
     se_ok = [bool(se[j] <= 0.25 * wn[j]) if wn[j] >= 1 else bool(se[j] <= 0.25) for j in range(5)]
-    return {"min_eigenvalue": float(eig.min()), "condition_number": float(eig.max() / eig.min()),
-            "max_abs_correlation": round(float(off), 4),
-            "correlation": np.round(corr, 3).tolist(),
-            "estimate": np.round(w.numpy(), 4).tolist(), "se": np.round(se, 4).tolist(),
-            "se_ok": se_ok,
-            "passed": bool(eig.min() > 0 and off <= 0.95 and all(se_ok))}
+    return {
+        "min_eigenvalue": float(eig.min()),
+        "condition_number": float(eig.max() / eig.min()),
+        "max_abs_correlation": round(float(off), 4),
+        "correlation": np.round(corr, 3).tolist(),
+        "estimate": np.round(w.numpy(), 4).tolist(),
+        "se": np.round(se, 4).tolist(),
+        "se_ok": se_ok,
+        "passed": bool(eig.min() > 0 and off <= 0.95 and all(se_ok)),
+    }
 
 
 def band_shares(data, w):
     """Mean predicted share of each distance band (rim, mid, long, three) over the shots."""
-    bands = torch.cat([1 - band_features().sum(1, keepdim=True), band_features()], 1)   # (141, 4)
+    bands = torch.cat([1 - band_features().sum(1, keepdim=True), band_features()], 1)  # (141, 4)
     tot, n = torch.zeros(4, dtype=torch.float64), 0
     for p in data.probs(w):
         tot += torch.einsum("nij,ik->k", p, bands)

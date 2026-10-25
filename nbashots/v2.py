@@ -6,14 +6,16 @@ feet and touch time in seconds, to maximise EP(s, t; x) - C(s, t) subject to
 
 EP is a frozen expected-points model; C(d) = b.d + 0.5 d'Qd with Q = LL'.
 """
+
 import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
 
+
 S_MAX = 35.0
-S_GRID = torch.arange(0, S_MAX + 1e-6, 0.25)          # 141 points
-T_GRID = torch.arange(0, 24 + 1e-6, 0.1)              # 241 points
+S_GRID = torch.arange(0, S_MAX + 1e-6, 0.25)  # 141 points
+T_GRID = torch.arange(0, 24 + 1e-6, 0.1)  # 241 points
 PLAYERS = ["lebron james", "stephen curry", "james harden"]
 
 
@@ -23,8 +25,12 @@ def load(path):
     df = pd.read_csv(path)
     n0 = len(df)
     df["k"] = df["SHOT_CLOCK"] + df["TOUCH_TIME"]
-    keep = ((df["TOUCH_TIME"] > 0) & df["SHOT_CLOCK"].notna() & (df["k"] <= 24)
-            & (df["SHOT_DIST"] <= S_MAX))
+    keep = (
+        (df["TOUCH_TIME"] > 0)
+        & df["SHOT_CLOCK"].notna()
+        & (df["k"] <= 24)
+        & (df["SHOT_DIST"] <= S_MAX)
+    )
     df = df[keep].reset_index(drop=True)
     df["s"] = df["SHOT_DIST"].astype(float)
     df["t"] = df["TOUCH_TIME"].astype(float)
@@ -54,8 +60,13 @@ class EPModel(nn.Module):
         self.register_buffer("mean", torch.tensor(mean, dtype=torch.float32))
         self.register_buffer("std", torch.tensor(std, dtype=torch.float32))
         self.three_a, self.three_c = float(three_a), float(three_c)
-        self.net = nn.Sequential(nn.Linear(8, hidden), nn.Tanh(), nn.Linear(hidden, hidden),
-                                 nn.Tanh(), nn.Linear(hidden, 1))
+        self.net = nn.Sequential(
+            nn.Linear(8, hidden),
+            nn.Tanh(),
+            nn.Linear(hidden, hidden),
+            nn.Tanh(),
+            nn.Linear(hidden, 1),
+        )
 
     def logit(self, s, t, ctx):
         """s, t: (...,) tensors; ctx: (..., 6) = def, k, late, three player flags."""
@@ -77,6 +88,7 @@ def context(df):
 
 def fit_ep(train, val, seed=0, hidden=32, epochs=60, lr=3e-3, batch=2048):
     from sklearn.linear_model import LogisticRegression
+
     lr3 = LogisticRegression().fit(train[["s"]], train["three"])
     a = float(lr3.coef_[0, 0])
     c = float(-lr3.intercept_[0] / a)
@@ -84,10 +96,12 @@ def fit_ep(train, val, seed=0, hidden=32, epochs=60, lr=3e-3, batch=2048):
     torch.manual_seed(seed)
     m = EPModel(num.mean(0), num.std(0), a, c, hidden)
     opt = torch.optim.Adam(m.parameters(), lr=lr)
-    tens = lambda d: (torch.tensor(d["s"].to_numpy(), dtype=torch.float32),  # noqa: E731
-                      torch.tensor(d["t"].to_numpy(), dtype=torch.float32),
-                      torch.from_numpy(context(d)),
-                      torch.tensor(d["FGM"].to_numpy(), dtype=torch.float32))
+    tens = lambda d: (
+        torch.tensor(d["s"].to_numpy(), dtype=torch.float32),  # noqa: E731
+        torch.tensor(d["t"].to_numpy(), dtype=torch.float32),
+        torch.from_numpy(context(d)),
+        torch.tensor(d["FGM"].to_numpy(), dtype=torch.float32),
+    )
     S, T, X, Y = tens(train)
     Sv, Tv, Xv, Yv = tens(val)
     bce = nn.BCEWithLogitsLoss()
@@ -96,7 +110,7 @@ def fit_ep(train, val, seed=0, hidden=32, epochs=60, lr=3e-3, batch=2048):
         m.train()
         perm = torch.randperm(len(S), generator=gen)
         for i in range(0, len(S), batch):
-            j = perm[i:i + batch]
+            j = perm[i : i + batch]
             loss = bce(m.logit(S[j], T[j], X[j]), Y[j])
             opt.zero_grad()
             loss.backward()
@@ -131,8 +145,9 @@ class QuadCost(nn.Module):
 
     def theta(self):
         Q = self.Q().detach()
-        return np.array([self.b[0].item(), self.b[1].item(), Q[0, 0].item(), Q[0, 1].item(),
-                         Q[1, 1].item()])
+        return np.array(
+            [self.b[0].item(), self.b[1].item(), Q[0, 0].item(), Q[0, 1].item(), Q[1, 1].item()]
+        )
 
 
 def constraints(d, k):
@@ -144,14 +159,14 @@ def constraints(d, k):
 def kkt_loss(ep_model, cost, d, ctx, k, lam_raw, rho, stationarity=True):
     """Mean squared stationarity residual + rho * complementary slackness, multipliers >= 0."""
     d = d.clone().requires_grad_(True)
-    lam = nn.functional.softplus(lam_raw)                            # dual feasibility
-    f = ep_model.ep(d[:, 0], d[:, 1], ctx) - cost(d)                 # objective (maximised)
+    lam = nn.functional.softplus(lam_raw)  # dual feasibility
+    f = ep_model.ep(d[:, 0], d[:, 1], ctx) - cost(d)  # objective (maximised)
     g = constraints(d, k)
     grad_f = torch.autograd.grad(f.sum(), d, create_graph=True)[0]
     grad_g = torch.autograd.grad((lam * g).sum(), d, create_graph=True)[0]
-    r = grad_f - grad_g                                              # grad f = sum lam grad g
-    stat = (r ** 2).sum(1).mean()
-    cs = (lam * (-g)).sum(1).mean()                                  # >= 0, zero iff slack
+    r = grad_f - grad_g  # grad f = sum lam grad g
+    stat = (r**2).sum(1).mean()
+    cs = (lam * (-g)).sum(1).mean()  # >= 0, zero iff slack
     loss = (stat if stationarity else 0.0) + rho * cs
     return loss, stat.detach().item(), cs.detach().item(), r.detach()
 
@@ -178,7 +193,7 @@ def ep_grid(ep_model, ctx, chunk=16):
     out = []
     with torch.no_grad():
         for i in range(0, len(ctx), chunk):
-            c = ctx[i:i + chunk]
+            c = ctx[i : i + chunk]
             n = len(c)
             x = c[:, None, None, :].expand(n, ns, nt, c.shape[-1])
             out.append(ep_model.ep(ss.expand(n, ns, nt), tt.expand(n, ns, nt), x))
@@ -189,8 +204,11 @@ def solve(epg, k, cost):
     """argmax of EP - C over the grid with t <= k. Returns (n, 2) decisions."""
     ss, tt = torch.meshgrid(S_GRID, T_GRID, indexing="ij")
     with torch.no_grad():
-        c = (torch.zeros_like(ss) if cost is None
-             else cost(torch.stack([ss.reshape(-1), tt.reshape(-1)], 1)).reshape(ss.shape))
+        c = (
+            torch.zeros_like(ss)
+            if cost is None
+            else cost(torch.stack([ss.reshape(-1), tt.reshape(-1)], 1)).reshape(ss.shape)
+        )
         obj = epg - c
         obj = obj.masked_fill(tt[None] > k[:, None, None] + 1e-6, -1e9)
         flat = obj.reshape(len(obj), -1).argmax(1)

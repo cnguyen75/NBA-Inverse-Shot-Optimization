@@ -15,6 +15,7 @@ Recovered (pre-registered): relative error of theta = (b, Q11, Q12, Q22) <= 0.25
 and median |s_hat - s_true| <= 1.0 ft and median |t_hat - t_true| <= 0.25 s.
 A noise-free run is also reported, for diagnosis only.
 """
+
 import json
 import os
 import sys
@@ -22,16 +23,28 @@ import sys
 import numpy as np
 import torch
 
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 from nbashots.data import SHOT_LOGS  # noqa: E402
-from nbashots.v2 import (PLAYERS, S_MAX, EPModel, QuadCost, context, ep_grid, fit_cost,  # noqa: E402
-                         load, solve, split_player)
+from nbashots.v2 import (  # noqa: E402
+    PLAYERS,
+    S_MAX,
+    EPModel,
+    QuadCost,
+    context,
+    ep_grid,
+    fit_cost,
+    load,
+    solve,
+    split_player,
+)
+
 
 SEED = 42
 RHOS = (0.01, 0.1, 1.0)
 NOISE = (1.0, 0.25)
-SYNTHETIC = {   # name: (mu in (ft, s), Q in points per ft^2 / s^2), fixed before any run
+SYNTHETIC = {  # name: (mu in (ft, s), Q in points per ft^2 / s^2), fixed before any run
     "rim": ((3.0, 1.5), ((0.010, 0.0), (0.0, 0.020))),
     "three": ((25.0, 1.0), ((0.008, 0.002), (0.002, 0.030))),
     "midrange_pullup": ((15.0, 3.0), ((0.012, -0.003), (-0.003, 0.015))),
@@ -68,8 +81,10 @@ def run(ep, df, noise, rng):
         half = len(va) // 2
         sets = {"train": tr, "select": va[:half], "check": va[half:]}
         ctx = {k_: torch.from_numpy(context(df.iloc[ix])) for k_, ix in sets.items()}
-        kk = {k_: torch.tensor(df.iloc[ix]["k"].to_numpy(), dtype=torch.float32)
-              for k_, ix in sets.items()}
+        kk = {
+            k_: torch.tensor(df.iloc[ix]["k"].to_numpy(), dtype=torch.float32)
+            for k_, ix in sets.items()
+        }
         grids = {k_: ep_grid(ep, ctx[k_]) for k_ in sets}
         truth = true_cost(mu, Q)
         d_true = {k_: solve(grids[k_], kk[k_], truth) for k_ in sets}
@@ -87,19 +102,37 @@ def run(ep, df, noise, rng):
         ds = float((p_hat[:, 0] - d_true["check"][:, 0]).abs().median())
         dt = float((p_hat[:, 1] - d_true["check"][:, 1]).abs().median())
         out[name] = {
-            "contexts_from": PLAYERS[i], "n_train": len(tr), "rho": rho,
-            "theta_true": np.round(th, 5).tolist(), "theta_hat": np.round(th_hat, 5).tolist(),
+            "contexts_from": PLAYERS[i],
+            "n_train": len(tr),
+            "rho": rho,
+            "theta_true": np.round(th, 5).tolist(),
+            "theta_hat": np.round(th_hat, 5).tolist(),
             "relative_theta_error": round(rel, 4),
-            "median_abs_diff_s_ft": round(ds, 3), "median_abs_diff_t_s": round(dt, 3),
-            "true_decisions_train": {"s_mean": round(float(d_true["train"][:, 0].mean()), 2),
-                                     "s_sd": round(float(d_true["train"][:, 0].std()), 2),
-                                     "t_mean": round(float(d_true["train"][:, 1].mean()), 2),
-                                     "t_sd": round(float(d_true["train"][:, 1].std()), 2)},
+            "median_abs_diff_s_ft": round(ds, 3),
+            "median_abs_diff_t_s": round(dt, 3),
+            "true_decisions_train": {
+                "s_mean": round(float(d_true["train"][:, 0].mean()), 2),
+                "s_sd": round(float(d_true["train"][:, 0].std()), 2),
+                "t_mean": round(float(d_true["train"][:, 1].mean()), 2),
+                "t_sd": round(float(d_true["train"][:, 1].std()), 2),
+            },
             "residuals": {k_: round(v, 6) for k_, v in diag.items()},
             "recovered": bool(rel <= 0.25 and ds <= 1.0 and dt <= 0.25),
         }
-        print(name, "noise" if noise else "no noise", {k_: out[name][k_] for k_ in
-              ("relative_theta_error", "median_abs_diff_s_ft", "median_abs_diff_t_s", "recovered", "rho")})
+        print(
+            name,
+            "noise" if noise else "no noise",
+            {
+                k_: out[name][k_]
+                for k_ in (
+                    "relative_theta_error",
+                    "median_abs_diff_s_ft",
+                    "median_abs_diff_t_s",
+                    "recovered",
+                    "rho",
+                )
+            },
+        )
     return out
 
 
@@ -107,10 +140,13 @@ def main():
     torch.set_num_threads(4)
     df, _ = load(SHOT_LOGS)
     ep = load_ep()
-    res = {"command": "python scripts/v2_synthetic.py", "noise_sd": NOISE,
-           "synthetic_costs": {k: {"mu": v[0], "Q": v[1]} for k, v in SYNTHETIC.items()},
-           "with_noise": run(ep, df, True, np.random.default_rng(SEED)),
-           "no_noise_diagnostic": run(ep, df, False, np.random.default_rng(SEED))}
+    res = {
+        "command": "python scripts/v2_synthetic.py",
+        "noise_sd": NOISE,
+        "synthetic_costs": {k: {"mu": v[0], "Q": v[1]} for k, v in SYNTHETIC.items()},
+        "with_noise": run(ep, df, True, np.random.default_rng(SEED)),
+        "no_noise_diagnostic": run(ep, df, False, np.random.default_rng(SEED)),
+    }
     res["criterion_a_passed"] = all(v["recovered"] for v in res["with_noise"].values())
     with open(os.path.join(ROOT, "results", "v2_synthetic.json"), "w") as f:
         json.dump(res, f, indent=1)
