@@ -3,7 +3,7 @@
 **Author:** Colin Nguyen · **Course:** Math 132B (Professor Atzberger), June 2025 · revised October 2026
 
 Shot analytics usually judge outcomes: did the shot go in? This project asks a
-different question: given the shots LeBron James, Stephen Curry and James
+different question: given the shots LeBron James, Stephen Curry, and James
 Harden actually took in 2014–15, what "cost" were they minimising when they
 chose them? Each real shot is treated as the chosen option among a few
 plausible alternatives the player didn't take, and a neural network learns a
@@ -18,7 +18,7 @@ far better than chance or a linear model. For LeBron James, the real shot is
 ranked first 54% of the time against 29% by chance and 29% for logistic
 regression. Curry and Harden show the same pattern.
 
-![Held-out comparison of the majority class, logistic regression and the network](figures/comparison.svg)
+![Held-out comparison of the majority class, logistic regression, and the network](figures/comparison.svg)
 
 | Test set (20% of shots, scored once) | Accuracy | ROC AUC | Real shot ranked first (chance) |
 |---|---|---|---|
@@ -79,7 +79,7 @@ validation shot were in training, so they are optimistic. The held-out table
 above replaces them.
 
 **"All models converged to low KKT residuals" was wrong.** At the end of
-training, the complementary-slackness term was −213.7 (LeBron), −347.2 (Curry)
+training, the complementary-slackness term was −213.7 (LeBron), −347.2 (Curry),
 and −142.4 (Harden), and still falling. As implemented:
 
 - the term is λ·mean(g), which is signed, so minimising it rewards large
@@ -98,10 +98,10 @@ generated alternatives, not as recovered KKT conditions.
 
 ## How it works
 
-1. **Data.** Every 2014–15 shot by the three players (978, 968 and 1,054
+1. **Data.** Every 2014–15 shot by the three players (978, 968, and 1,054
    shots). Features: shot distance, closest defender's distance, shot clock,
    dribbles, the player's field-goal percentage so far in the game, a distance
-   band (0–4, 4–14, 14–22, 22+ ft) and the game stage.
+   band (0–4, 4–14, 14–22, 22+ ft), and the game stage.
 2. **Alternatives.** For 800 sampled shots per player, up to three perturbed
    versions of the same moment (different distance, defender spacing, shot
    clock) are generated as options the player didn't take
@@ -616,7 +616,18 @@ What this means:
 | **Power check** | Could an ideal estimator have passed v3b's gate? | Only 36% of the time: the limit sat at the ideal estimator's 95th percentile. The gate was underpowered. |
 | **v3c** | The same model, band-share limit set by the power check (revised after v3b's narrow miss, by a rule fixed beforehand), fresh seeds | Synthetic gate passed (60 of 60). On real players, both criteria failed: worse than each player's own shot distribution, and wrong about how shots shift with context. |
 
-No claim about any player's preferences or cost is made from v2, v3a, v3b or v3c.
+No claim about any player's preferences or cost is made from v2, v3a, v3b, or v3c.
+
+## Limitations and next steps
+
+- The shot logs carry no stated licence, so the data and any row-level derivative stay out of
+  the repository; a reader has to download them from Kaggle to re-run anything.
+- The alternatives are synthetic, and the network partly learns the generator (see the caveats
+  under "What it finds"). The v1 result is a ranking over generated options, not a recovered
+  cost.
+- The "KKT" terms of the course model never shaped the cost; v2, v3a, v3b, and v3c each
+  stopped at a pre-registered criterion, so no claim about any player's cost is made.
+- No further attempt is registered here. The record stops at v3c.
 
 ## Data
 
@@ -633,7 +644,7 @@ shasum -a 256 data/shot_logs.csv
 # e9c7fcd71e6f81ade108841449fe1bccda072ed98fae2b5dc86a3b9f29fe5c7c
 ```
 
-## Running it
+## Run it
 
 Python 3.12 with [uv](https://docs.astral.sh/uv/); about two minutes on a laptop CPU.
 
