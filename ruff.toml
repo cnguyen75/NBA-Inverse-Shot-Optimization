@@ -1,7 +1,8 @@
 line-length = 100
 target-version = "py311"
+# ruff format rewrites code blocks inside Markdown; prose is not its job.
 # The course notebook is the submitted artefact and is not reformatted.
-extend-exclude = ["notebooks"]
+extend-exclude = ["notebooks", "*.md"]
 
 [lint]
 select = [
