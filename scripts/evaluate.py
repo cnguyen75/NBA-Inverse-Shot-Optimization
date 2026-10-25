@@ -83,7 +83,9 @@ def metrics(y: np.ndarray, p: np.ndarray, groups: np.ndarray) -> dict[str, float
 def bootstrap(
     y: np.ndarray, preds: dict[str, np.ndarray], groups: np.ndarray, rng: np.random.Generator
 ) -> tuple[dict[str, dict[str, list[float]]], dict[str, dict[str, list[float]]]]:
-    """Percentile intervals for each model's metrics and paired differences vs logistic regression."""
+    """Percentile intervals for each model's metrics and paired differences vs logistic
+    regression.
+    """
     ug = np.unique(groups)
     idx = {g: np.flatnonzero(groups == g) for g in ug}
     draws = {k: [] for k in preds}

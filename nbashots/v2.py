@@ -21,7 +21,6 @@ T_GRID = torch.arange(0, 24 + 1e-6, 0.1)  # 241 points
 PLAYERS = ["lebron james", "stephen curry", "james harden"]
 
 
-# ------------------------------------------------------------------ data
 def load(path: str) -> tuple[pd.DataFrame, int]:
     """All shots passing the pre-registered filters, with decision and context columns."""
     df = pd.read_csv(path)
@@ -52,7 +51,6 @@ def split_player(
     return idx[:a], idx[a:b], idx[b:]
 
 
-# ------------------------------------------------------------------ expected points
 class EPModel(nn.Module):
     """P(make | s, t, def, k, late, player) by a smooth MLP; P(three | s) logistic.
 
@@ -146,7 +144,6 @@ def fit_ep(
     return m, best
 
 
-# ------------------------------------------------------------------ cost and optimality
 class QuadCost(nn.Module):
     """C(d) = b.d + 0.5 d'Qd, Q = LL' (positive semi-definite). d = (s ft, t s)."""
 
@@ -227,7 +224,6 @@ def fit_cost(
     return cost, {"stationarity": stat, "comp_slackness": cs}
 
 
-# ------------------------------------------------------------------ forward solver
 def ep_grid(ep_model: EPModel, ctx: torch.Tensor, chunk: int = 16) -> torch.Tensor:
     """EP on the (s, t) grid for each context row: (n, 141, 241)."""
     ns, nt = len(S_GRID), len(T_GRID)

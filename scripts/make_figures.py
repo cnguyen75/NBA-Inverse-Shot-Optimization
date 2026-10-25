@@ -124,7 +124,8 @@ def comparison_svg(res: dict[str, Any]) -> str:
             for t in (lo, (lo + hi) / 2, hi):
                 xx = x0 + (t - lo) / (hi - lo) * col_w
                 p.append(
-                    f'<line x1="{xx:.1f}" x2="{xx:.1f}" y1="{y0 - 10}" y2="{y0 + len(rows) * row_h - 12}" '
+                    f'<line x1="{xx:.1f}" x2="{xx:.1f}" y1="{y0 - 10}" '
+                    f'y2="{y0 + len(rows) * row_h - 12}" '
                     f'stroke="{RULE}" stroke-dasharray="3 3"/>'
                 )
             if key == "top1_within_shot":
